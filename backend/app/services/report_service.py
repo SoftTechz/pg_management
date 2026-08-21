@@ -30,7 +30,7 @@ class ReportService:
         ]
 
     def occupancy(self) -> list[dict]:
-        return self.rooms.list_rooms()
+        return self.rooms.list_rooms(include_occupants=False)
 
     def payment_history(self, customer_id: str | None = None) -> list[dict]:
         rows = self.payments.list_payments(customer_id=customer_id)

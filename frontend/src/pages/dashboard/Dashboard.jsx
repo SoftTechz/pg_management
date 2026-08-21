@@ -21,98 +21,103 @@ export default function HospitalDashboard() {
   );
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadDashboard() {
       setStatsLoading(true);
+      setPaymentLoading(true);
       setError(null);
 
-      try {
-        const statsResponse = await getDashboardStats();
-        if (statsResponse) {
-          const s = statsResponse.data || statsResponse;
-          setStats([
-            {
-              title: "Total Rooms",
-              value: s.total_rooms,
-              icon: Users,
-              trend: `${s.available_beds || 0} beds available`,
-              trendColor: "text-sky-600",
-            },
-            {
-              title: "Total Customers",
-              value: s.total_customers,
-              icon: Users,
-              trend: `${s.occupied_beds || 0} beds occupied`,
-              trendColor: "text-sky-600",
-            },
-            {
-              title: "Pending Rent",
-              value: `INR ${Number(s.pending_monthly_rent || 0).toLocaleString("en-IN")}`,
-              icon: CreditCard,
-              trend: `${s.unpaid_customers || 0} unpaid customers`,
-              trendColor: "text-red-600",
-            },
-            {
-              title: `${s.month_label || "Monthly"} Collected`,
-              value: `INR ${Number(s.collected_monthly_rent || 0).toLocaleString("en-IN")}`,
-              icon: DollarSign,
-              trend: `${s.paid_customers || 0} paid customers`,
-              trendColor: "text-emerald-600",
-            },
-          ]);
-        } else {
-          setStats([
-            {
-              title: "Total Rooms",
-              value: 0,
-              icon: Users,
-              trend: "-",
-              trendColor: "text-slate-500",
-            },
-            {
-              title: "Total Customers",
-              value: 0,
-              icon: Users,
-              trend: "-",
-              trendColor: "text-slate-500",
-            },
-            {
-              title: "Pending Rent",
-              value: "INR 0",
-              icon: CreditCard,
-              trend: "-",
-              trendColor: "text-slate-500",
-            },
-            {
-              title: "Monthly Collected",
-              value: "INR 0",
-              icon: DollarSign,
-              trend: "-",
-              trendColor: "text-slate-500",
-            },
-          ]);
-        }
-      } catch (caught) {
-        setError(caught?.message || "Failed to load dashboard stats");
-      } finally {
-        setStatsLoading(false);
+      const [statsResult, paymentsResult] = await Promise.allSettled([
+        getDashboardStats(),
+        getMonthlyPayments(selectedMonth),
+      ]);
+
+      if (cancelled) return;
+
+      if (statsResult.status === "fulfilled" && statsResult.value) {
+        const s = statsResult.value.data || statsResult.value;
+        setStats([
+          {
+            title: "Total Rooms",
+            value: s.total_rooms,
+            icon: Users,
+            trend: `${s.available_beds || 0} beds available`,
+            trendColor: "text-sky-600",
+          },
+          {
+            title: "Total Customers",
+            value: s.total_customers,
+            icon: Users,
+            trend: `${s.occupied_beds || 0} beds occupied`,
+            trendColor: "text-sky-600",
+          },
+          {
+            title: "Pending Rent",
+            value: `INR ${Number(s.pending_monthly_rent || 0).toLocaleString("en-IN")}`,
+            icon: CreditCard,
+            trend: `${s.unpaid_customers || 0} unpaid customers`,
+            trendColor: "text-red-600",
+          },
+          {
+            title: `${s.month_label || "Monthly"} Collected`,
+            value: `INR ${Number(s.collected_monthly_rent || 0).toLocaleString("en-IN")}`,
+            icon: DollarSign,
+            trend: `${s.paid_customers || 0} paid customers`,
+            trendColor: "text-emerald-600",
+          },
+        ]);
+      } else {
+        setStats([
+          {
+            title: "Total Rooms",
+            value: 0,
+            icon: Users,
+            trend: "-",
+            trendColor: "text-slate-500",
+          },
+          {
+            title: "Total Customers",
+            value: 0,
+            icon: Users,
+            trend: "-",
+            trendColor: "text-slate-500",
+          },
+          {
+            title: "Pending Rent",
+            value: "INR 0",
+            icon: CreditCard,
+            trend: "-",
+            trendColor: "text-slate-500",
+          },
+          {
+            title: "Monthly Collected",
+            value: "INR 0",
+            icon: DollarSign,
+            trend: "-",
+            trendColor: "text-slate-500",
+          },
+        ]);
+        setError(
+          statsResult.reason?.message || "Failed to load dashboard stats",
+        );
       }
 
-      try {
-        setPaymentLoading(true);
-        const monthlyResponse = await getMonthlyPayments(selectedMonth);
-        setMonthlyPayments(monthlyResponse || []);
-      } catch (caught) {
-        setError(
-          (prev) =>
-            prev || caught?.message || "Failed to load monthly payments",
-        );
+      if (paymentsResult.status === "fulfilled") {
+        setMonthlyPayments(paymentsResult.value || []);
+      } else {
         setMonthlyPayments([]);
-      } finally {
-        setPaymentLoading(false);
+        setError((previous) => previous || "Failed to load monthly payments");
       }
+
+      setStatsLoading(false);
+      setPaymentLoading(false);
     }
 
     loadDashboard();
+    return () => {
+      cancelled = true;
+    };
   }, [selectedMonth]);
 
   const savePayment = async (row) => {

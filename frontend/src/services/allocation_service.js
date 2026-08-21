@@ -2,13 +2,13 @@ import api from "@/config/axios";
 
 // Create allocation
 export const createAllocation = async (payload) => {
-  const res = await api.post("/allocations/", payload);
+  const res = await api.post("/allocations", payload);
   return res.data;
 };
 
 // Get allocations
 export const getAllAllocations = async (params = {}) => {
-  const res = await api.get("/allocations/", { params });
+  const res = await api.get("/allocations", { params });
   return res.data;
 };
 

@@ -12,7 +12,11 @@ class AllocationService:
         self.rooms = RoomService(self.repo)
 
     def list_allocations(self) -> list[dict]:
-        return sorted(self.repo.list("allocations"), key=lambda a: a.get("created_at", ""), reverse=True)
+        return sorted(
+            self.repo.list("allocations"),
+            key=lambda a: a.get("created_at", ""),
+            reverse=True,
+        )
 
     def allocate(self, payload: AllocationCreate) -> dict:
         customer = self.repo.get("customers", payload.customer_id)
@@ -25,14 +29,24 @@ class AllocationService:
             raise HTTPException(status_code=400, detail="Room is under maintenance")
 
         active_allocations = [
-            a for a in self.repo.list("allocations")
-            if a.get("room_id") == payload.room_id and a.get("status") == "Active"
+            allocation
+            for allocation in self.repo.list("allocations")
+            if allocation.get("status") == "Active"
         ]
-        if len(active_allocations) >= int(room.get("total_beds", 0)):
+        room_allocations = [
+            allocation
+            for allocation in active_allocations
+            if allocation.get("room_id") == payload.room_id
+        ]
+        if len(room_allocations) >= int(room.get("total_beds", 0)):
             raise HTTPException(status_code=400, detail="Room has no available beds")
-        if any(int(a.get("bed_number", 0)) == payload.bed_number for a in active_allocations):
-            raise HTTPException(status_code=400, detail="Selected bed is already occupied")
-        if any(a.get("customer_id") == payload.customer_id and a.get("status") == "Active" for a in self.repo.list("allocations")):
+        if any(
+            int(a.get("bed_number", 0)) == payload.bed_number for a in room_allocations
+        ):
+            raise HTTPException(
+                status_code=400, detail="Selected bed is already occupied"
+            )
+        if any(a.get("customer_id") == payload.customer_id for a in active_allocations):
             raise HTTPException(status_code=400, detail="Customer is already allocated")
 
         now = utc_now_iso()
@@ -47,7 +61,11 @@ class AllocationService:
             }
         )
         allocation = self.repo.create("allocations", data)
-        self.repo.update("customers", payload.customer_id, {"room_number": room.get("room_number"), "updated_at": now})
+        self.repo.update(
+            "customers",
+            payload.customer_id,
+            {"room_number": room.get("room_number"), "updated_at": now},
+        )
         self.rooms.refresh_room_occupancy(payload.room_id)
         return allocation
 
@@ -58,7 +76,15 @@ class AllocationService:
         if allocation.get("status") != "Active":
             return allocation
         now = utc_now_iso()
-        updated = self.repo.update("allocations", allocation_id, {"status": "Vacated", "end_date": now[:10], "updated_at": now})
-        self.repo.update("customers", allocation["customer_id"], {"room_number": None, "status": "Vacated", "updated_at": now})
+        updated = self.repo.update(
+            "allocations",
+            allocation_id,
+            {"status": "Vacated", "end_date": now[:10], "updated_at": now},
+        )
+        self.repo.update(
+            "customers",
+            allocation["customer_id"],
+            {"room_number": None, "status": "Vacated", "updated_at": now},
+        )
         self.rooms.refresh_room_occupancy(allocation["room_id"])
         return updated

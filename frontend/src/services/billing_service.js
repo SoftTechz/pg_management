@@ -1,12 +1,12 @@
 import api from "@/config/axios";
 
 export const createPayments = async (payload) => {
-  const res = await api.post("/payments/", payload);
+  const res = await api.post("/payments", payload);
   return res.data;
 };
 
 export const createPayment = async (payload) => {
-  const res = await api.post("/payments/", payload);
+  const res = await api.post("/payments", payload);
   return res.data;
 };
 
@@ -16,7 +16,7 @@ export const updatePayments = async (paymentsId, payload) => {
 };
 
 export const getAllPayments = async (params = {}) => {
-  const res = await api.get("/payments/", { params });
+  const res = await api.get("/payments", { params });
   return res.data;
 };
 

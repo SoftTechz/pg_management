@@ -2,7 +2,7 @@ import api from "@/config/axios";
 
 // Create room
 export const createRoom = async (payload) => {
-  const res = await api.post("/rooms/", payload);
+  const res = await api.post("/rooms", payload);
   console.log("Create Room Response:", res.data);
   return res.data;
 };
@@ -22,7 +22,7 @@ export const deleteRoom = async (roomId) => {
 
 // Get all rooms with pagination and optional server-side search
 export const getAllRooms = async (params = {}) => {
-  const res = await api.get("/rooms/", { params });
+  const res = await api.get("/rooms", { params });
   return res.data;
 };
 

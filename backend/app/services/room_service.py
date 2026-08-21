@@ -5,7 +5,9 @@ from app.services.repository import FirestoreRepository
 from app.utils.dates import utc_now_iso
 
 
-def derive_room_status(total_beds: int, occupied_beds: int, current_status: str | None = None) -> str:
+def derive_room_status(
+    total_beds: int, occupied_beds: int, current_status: str | None = None
+) -> str:
     if current_status == "Maintenance":
         return "Maintenance"
     if occupied_beds <= 0:
@@ -19,14 +21,37 @@ class RoomService:
     def __init__(self, repo=None):
         self.repo = repo or FirestoreRepository()
 
-    def list_rooms(self) -> list[dict]:
-        return sorted([self._hydrate_room(r) for r in self.repo.list("rooms")], key=lambda r: r.get("room_number", ""))
+    def list_rooms(self, include_occupants: bool = True) -> list[dict]:
+        rooms = self.repo.list("rooms")
+        if not include_occupants:
+            return sorted(rooms, key=lambda room: room.get("room_number", ""))
+        allocations = [
+            allocation
+            for allocation in self.repo.list("allocations")
+            if allocation.get("status") == "Active"
+        ]
+        customers = {
+            customer["id"]: customer for customer in self.repo.list("customers")
+        }
+        return sorted(
+            [self._hydrate_room(room, allocations, customers) for room in rooms],
+            key=lambda room: room.get("room_number", ""),
+        )
 
     def get_room(self, room_id: str) -> dict:
         room = self.repo.get("rooms", room_id)
         if not room:
             raise HTTPException(status_code=404, detail="Room not found")
-        return self._hydrate_room(room)
+        allocations = [
+            allocation
+            for allocation in self.repo.list("allocations")
+            if allocation.get("room_id") == room_id
+            and allocation.get("status") == "Active"
+        ]
+        customers = {
+            customer["id"]: customer for customer in self.repo.list("customers")
+        }
+        return self._hydrate_room(room, allocations, customers)
 
     def create_room(self, payload: RoomCreate) -> dict:
         now = utc_now_iso()
@@ -48,16 +73,22 @@ class RoomService:
         total = int(data.get("total_beds", room["total_beds"]))
         occupied = int(room.get("occupied_beds", 0))
         if total < occupied:
-            raise HTTPException(status_code=400, detail="Total beds cannot be less than occupied beds")
+            raise HTTPException(
+                status_code=400, detail="Total beds cannot be less than occupied beds"
+            )
         data["available_beds"] = total - occupied
-        data["status"] = derive_room_status(total, occupied, data.get("status", room.get("status")))
+        data["status"] = derive_room_status(
+            total, occupied, data.get("status", room.get("status"))
+        )
         data["updated_at"] = utc_now_iso()
         return self.repo.update("rooms", room_id, data)
 
     def delete_room(self, room_id: str) -> None:
         room = self.get_room(room_id)
         if room.get("occupied_beds", 0) > 0:
-            raise HTTPException(status_code=400, detail="Cannot delete an occupied room")
+            raise HTTPException(
+                status_code=400, detail="Cannot delete an occupied room"
+            )
         self.repo.delete("rooms", room_id)
 
     def refresh_room_occupancy(self, room_id: str) -> dict:
@@ -65,7 +96,8 @@ class RoomService:
         if not room:
             raise HTTPException(status_code=404, detail="Room not found")
         allocations = [
-            a for a in self.repo.list("allocations")
+            a
+            for a in self.repo.list("allocations")
             if a.get("room_id") == room_id and a.get("status") == "Active"
         ]
         occupied = len(allocations)
@@ -78,15 +110,35 @@ class RoomService:
         }
         return self.repo.update("rooms", room_id, updates)
 
-    def _hydrate_room(self, room: dict) -> dict:
-        allocations = [
-            a for a in self.repo.list("allocations")
-            if a.get("room_id") == room["id"] and a.get("status") == "Active"
-        ]
+    def _hydrate_room(
+        self,
+        room: dict,
+        allocations: list[dict] | None = None,
+        customers: dict[str, dict] | None = None,
+    ) -> dict:
+        allocations = (
+            allocations
+            if allocations is not None
+            else [
+                allocation
+                for allocation in self.repo.list("allocations")
+                if allocation.get("room_id") == room["id"]
+                and allocation.get("status") == "Active"
+            ]
+        )
+        customers = customers or {}
         occupants = []
         for allocation in allocations:
-            customer = self.repo.get("customers", allocation.get("customer_id", ""))
+            if allocation.get("room_id") != room["id"]:
+                continue
+            customer = customers.get(allocation.get("customer_id", ""))
             if customer:
-                occupants.append({"id": customer["id"], "name": customer.get("name"), "bed_number": allocation.get("bed_number")})
+                occupants.append(
+                    {
+                        "id": customer["id"],
+                        "name": customer.get("name"),
+                        "bed_number": allocation.get("bed_number"),
+                    }
+                )
         room["occupants"] = occupants
         return room

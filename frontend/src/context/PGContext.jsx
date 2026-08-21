@@ -15,13 +15,13 @@ export function PGProvider({ children }) {
       .then((items) => {
         const activePGs = (items || []).filter((pg) => pg.is_active !== false);
         setPgs(activePGs);
-        if (!selectedPgId && activePGs[0]) {
+        if (!localStorage.getItem(SELECTED_PG_KEY) && activePGs[0]) {
           setSelectedPgId(activePGs[0].pg_id);
           localStorage.setItem(SELECTED_PG_KEY, activePGs[0].pg_id);
         }
       })
       .catch(() => setPgs([]));
-  }, [selectedPgId]);
+  }, []);
 
   const selectPG = (pgId) => {
     setSelectedPgId(pgId);

@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 
-from app.core.firebase import get_firestore_client
 from app.core.pg_context import DEFAULT_PG_ID
 from app.schemas.pg import PGCreate
 from app.services.repository import FirestoreRepository
@@ -22,7 +21,7 @@ class PGService:
         self.repo = repo or FirestoreRepository()
 
     def list_pgs(self) -> list[dict]:
-        self.ensure_legacy_pg()
+        self.ensure_legacy_pg(migrate=True)
         return sorted(self.repo.list("pgs"), key=lambda pg: pg.get("created_at", ""))
 
     def create_pg(self, payload: PGCreate) -> dict:
@@ -39,7 +38,7 @@ class PGService:
             },
         )
 
-    def ensure_legacy_pg(self) -> dict:
+    def ensure_legacy_pg(self, migrate: bool = True) -> dict:
         existing = self.repo.get("pgs", DEFAULT_PG_ID)
         now = datetime.now(timezone.utc).isoformat()
         if not existing:
@@ -55,7 +54,12 @@ class PGService:
                     "is_active": True,
                 },
             )
-        self._backfill_legacy_data()
+        if migrate and not existing.get("legacy_data_migrated"):
+            self._backfill_legacy_data()
+            existing = (
+                self.repo.update("pgs", DEFAULT_PG_ID, {"legacy_data_migrated": True})
+                or existing
+            )
         return existing
 
     def _backfill_legacy_data(self) -> None:

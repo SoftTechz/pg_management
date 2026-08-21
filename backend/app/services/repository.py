@@ -14,7 +14,13 @@ class FirestoreRepository:
         self.client = get_firestore_client()
 
     def list(self, collection: str) -> list[dict]:
-        documents = self.client.collection(collection).stream()
+        collection_ref = self.client.collection(collection)
+        if collection not in UNSCOPED_COLLECTIONS:
+            documents = collection_ref.where(
+                "pg_id", "==", get_current_pg_id()
+            ).stream()
+        else:
+            documents = collection_ref.stream()
         rows = [_with_id(doc.id, doc.to_dict() or {}) for doc in documents]
         if collection in UNSCOPED_COLLECTIONS:
             return rows
@@ -49,10 +55,12 @@ class FirestoreRepository:
 
     def update(self, collection: str, item_id: str, data: dict) -> dict | None:
         doc_ref = self.client.collection(collection).document(item_id)
-        if not self.get(collection, item_id):
+        existing = self.get(collection, item_id)
+        if not existing:
             return None
         doc_ref.update(data)
-        return self.get(collection, item_id)
+        existing.update(data)
+        return existing
 
     def delete(self, collection: str, item_id: str) -> None:
         if self.get(collection, item_id):
