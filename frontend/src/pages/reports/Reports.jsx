@@ -122,7 +122,7 @@ export default function Reports() {
 
   return (
     <DashboardLayout>
-      <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-5 h-full min-h-0 flex flex-col min-w-0">
+      <div className="bg-white rounded-lg shadow-lg p-2 sm:p-4 md:p-5 h-full min-h-0 flex flex-col min-w-0 text-xs sm:text-sm">
         <ModuleHeader
           icon={<FileText size={22} />}
           title="Reports"
@@ -140,7 +140,7 @@ export default function Reports() {
           }
         />
         <nav
-          className="flex flex-wrap gap-1 border-b border-gray-200 mb-4 shrink-0"
+          className="flex flex-wrap gap-0.5 border-b border-gray-200 mb-3 shrink-0"
           aria-label="Report submodules"
         >
           {REPORTS.map(([key, label]) => (

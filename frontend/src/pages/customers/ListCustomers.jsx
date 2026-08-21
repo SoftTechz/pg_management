@@ -356,17 +356,6 @@ export default function ListCustomers() {
                       </button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-1 text-xs sm:text-sm text-gray-600">
-                    <Info label="Mobile" value={customer.mobile_number} />
-                    <Info
-                      label="Admission Date"
-                      value={formatDate(customer.admission_date)}
-                    />
-                    <Info
-                      label="Monthly Rent"
-                      value={formatCurrency(customer.monthly_rent)}
-                    />
-                  </div>
                 </article>
               ))}
             </div>

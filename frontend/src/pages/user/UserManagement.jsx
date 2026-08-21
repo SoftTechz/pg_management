@@ -160,7 +160,7 @@ export default function UserManagement() {
 
   return (
     <DashboardLayout>
-      <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-5 relative min-w-0">
+      <div className="bg-white rounded-lg shadow-lg p-2 sm:p-4 md:p-5 relative min-w-0 text-xs sm:text-sm">
         <LoadingOverlay show={loading} message="Updating PIN..." />
         <ModuleHeader
           icon={<Shield size={22} />}
@@ -169,7 +169,7 @@ export default function UserManagement() {
         />
 
         <div className="max-w-6xl mx-auto mt-5 sm:mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 items-center">
             {/* Left Image */}
             <div className="flex justify-right lg:justify-center">
               <img
@@ -181,15 +181,15 @@ export default function UserManagement() {
 
             {/* Form */}
             <div className="flex justify-center lg:justify-start">
-              <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-md w-full max-w-md">
+              <div className="bg-white rounded-lg p-3 sm:p-6 border border-gray-200 shadow-md w-full max-w-md">
                 <div className="text-center mb-5">
                   <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full mb-3">
                     <Key size={24} className="text-purple-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
                     Change Login PIN
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs sm:text-sm text-gray-600">
                     Enter your current PIN and set a new 4-digit PIN
                   </p>
                 </div>

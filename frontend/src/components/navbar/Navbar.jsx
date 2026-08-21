@@ -16,10 +16,12 @@ export default function Navbar({ onMenuToggle }) {
             <Building2 size={21} strokeWidth={2.2} aria-hidden="true" />
           </div>
           <div>
-            <h1 className="text-base sm:text-lg md:text-2xl font-bold text-slate-900">
+            <h1 className="text-xs sm:text-lg md:text-2xl font-bold text-slate-900">
               Brindavan Elite PG For Gents
             </h1>
-            <p className="text-xs text-slate-500">Property Management System</p>
+            <p className="text-[9px] sm:text-xs text-slate-500">
+              Property Management System
+            </p>
           </div>
         </div>
       </div>

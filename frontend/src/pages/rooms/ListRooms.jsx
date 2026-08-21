@@ -353,14 +353,14 @@ function RoomCard({ room, index, onOpen }) {
   return (
     <article
       onClick={() => onOpen(room)}
-      className="bg-white rounded-xl border border-slate-200 p-3 cursor-pointer shadow-sm"
+      className="bg-white rounded-lg border border-slate-200 p-2.5 cursor-pointer shadow-sm"
     >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold text-purple-700">
             S.No {index + 1}
           </p>
-          <h3 className="font-semibold text-gray-900 text-sm sm:text-base line-clamp-2 leading-5">
+          <h3 className="font-semibold text-gray-900 text-xs leading-4 line-clamp-2">
             Room {room.room_number || "-"}
           </h3>
         </div>
@@ -376,11 +376,11 @@ function RoomCard({ room, index, onOpen }) {
           <Pencil size={16} />
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-2 mt-3 text-sm text-gray-600">
+      <div className="grid grid-cols-2 gap-1 mt-2 text-[11px] text-gray-600">
         <span>Total beds: {room.total_beds || 0}</span>
         <span>Available: {room.available_beds ?? room.total_beds ?? 0}</span>
       </div>
-      <div className="mt-3">
+      <div className="mt-2">
         <Status vacant={vacant} />
       </div>
     </article>

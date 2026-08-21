@@ -181,7 +181,7 @@ export default function HospitalDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-5 relative min-w-0">
+      <div className="bg-white rounded-xl shadow-lg p-2.5 sm:p-4 md:p-5 relative min-w-0">
         <ModuleHeader
           icon={<Users size={22} />}
           title="Dashboard"
@@ -195,21 +195,21 @@ export default function HospitalDashboard() {
         <div className="max-w-[1300px] mx-auto space-y-6">
           {/* Stats cards */}
           <section>
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-3">
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3">
               {(statsLoading ? new Array(4).fill(0) : cards).map(
                 (item, idx) => (
                   <article
                     key={item?.title ?? idx}
-                    className={`rounded-xl bg-white p-3 sm:p-4 shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-md ${
+                    className={`rounded-lg bg-white p-2 sm:p-4 shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-md ${
                       statsLoading ? "animate-pulse" : ""
                     }`}
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="text-[10px] sm:text-xs uppercase tracking-wide text-slate-500 leading-tight">
+                        <p className="text-[9px] sm:text-xs uppercase tracking-wide text-slate-500 leading-tight">
                           {item?.title ?? "Loading"}
                         </p>
-                        <p className="mt-1.5 text-xl sm:text-2xl font-bold text-slate-900 break-words">
+                        <p className="mt-1 text-lg sm:text-2xl font-bold text-slate-900 break-words">
                           {statsLoading ? "--" : item.value}
                         </p>
                       </div>
@@ -238,10 +238,10 @@ export default function HospitalDashboard() {
           <section className="rounded-xl bg-white p-3 sm:p-4 shadow-sm">
             <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h2 className="text-base sm:text-lg font-semibold text-slate-900">
+                <h2 className="text-sm sm:text-lg font-semibold text-slate-900">
                   Monthly Rent Payments
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-500">
+                <p className="text-[10px] sm:text-sm text-slate-500 leading-4">
                   Customers without a paid record are pending from the 5th of
                   the month.
                 </p>
@@ -250,19 +250,23 @@ export default function HospitalDashboard() {
                 type="month"
                 value={selectedMonth}
                 onChange={(event) => setSelectedMonth(event.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                className="px-2 py-1.5 border border-slate-300 rounded-lg text-xs sm:text-sm"
               />
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full text-left">
                 <thead className="bg-slate-100 text-xs uppercase tracking-wider text-slate-600">
                   <tr>
-                    <th className="px-4 py-3">Customer</th>
-                    <th className="px-4 py-3">Room</th>
-                    <th className="px-4 py-3">Rent</th>
-                    <th className="px-4 py-3">Amount Paid</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Action</th>
+                    <th className="px-2 py-2 text-[10px] sm:text-xs">
+                      Customer
+                    </th>
+                    <th className="px-2 py-2 text-[10px] sm:text-xs">Room</th>
+                    <th className="px-2 py-2 text-[10px] sm:text-xs">Rent</th>
+                    <th className="px-2 py-2 text-[10px] sm:text-xs">
+                      Amount Paid
+                    </th>
+                    <th className="px-2 py-2 text-[10px] sm:text-xs">Status</th>
+                    <th className="px-2 py-2 text-[10px] sm:text-xs">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -292,19 +296,19 @@ export default function HospitalDashboard() {
                           key={row.customer_id}
                           className={`border-b ${pending ? "bg-red-50" : "bg-white"}`}
                         >
-                          <td className="px-4 py-3 font-medium text-slate-800">
+                          <td className="px-2 py-2 text-xs font-medium text-slate-800">
                             {row.customer_name || "-"}
                           </td>
-                          <td className="px-4 py-3 text-slate-600">
+                          <td className="px-2 py-2 text-xs text-slate-600">
                             {row.room_number || "-"}
                           </td>
-                          <td className="px-4 py-3 text-slate-600">
+                          <td className="px-2 py-2 text-xs text-slate-600">
                             INR{" "}
                             {Number(row.monthly_rent || 0).toLocaleString(
                               "en-IN",
                             )}
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-2 py-2">
                             <input
                               type="number"
                               min="0"
@@ -317,22 +321,22 @@ export default function HospitalDashboard() {
                                   event.target.value,
                                 )
                               }
-                              className="w-28 px-2 py-1.5 border border-slate-300 rounded-md"
+                              className="w-20 sm:w-28 px-1.5 py-1 text-xs border border-slate-300 rounded-md"
                             />
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-2 py-2">
                             <span
                               className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${pending ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}
                             >
                               {pending ? "Pending" : "Paid"}
                             </span>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-2 py-2">
                             <button
                               type="button"
                               onClick={() => savePayment(row)}
                               disabled={paymentSaving === row.customer_id}
-                              className="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-sm font-semibold disabled:opacity-50"
+                              className="px-2 py-1 rounded-md bg-purple-600 text-white text-[10px] sm:text-xs font-semibold disabled:opacity-50"
                             >
                               {paymentSaving === row.customer_id
                                 ? "Saving..."
