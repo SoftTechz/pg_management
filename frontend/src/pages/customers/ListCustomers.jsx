@@ -317,17 +317,17 @@ export default function ListCustomers() {
                 <article
                   key={customer.id || `${customer.name}-${index}`}
                   onClick={() => openView(customer)}
-                  className="bg-gray-50 rounded-xl border border-gray-200 p-3.5 space-y-3 cursor-pointer active:bg-gray-100 overflow-hidden"
+                  className="bg-white rounded-xl border border-slate-200 p-3 space-y-2.5 cursor-pointer active:bg-slate-50 overflow-hidden shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-purple-700">
                         S.No {startIndex + index + 1}
                       </p>
-                      <h3 className="font-semibold text-gray-900 truncate text-sm sm:text-base">
+                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base line-clamp-2 leading-5">
                         {customer.name || "-"}
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs sm:text-sm text-gray-500 line-clamp-2 leading-5">
                         Room {customer.room_number || "-"}
                       </p>
                     </div>
@@ -356,7 +356,7 @@ export default function ListCustomers() {
                       </button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-1.5 text-xs sm:text-sm text-gray-600">
+                  <div className="grid grid-cols-1 gap-1 text-xs sm:text-sm text-gray-600">
                     <Info label="Mobile" value={customer.mobile_number} />
                     <Info
                       label="Admission Date"

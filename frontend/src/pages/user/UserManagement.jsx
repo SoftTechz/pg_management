@@ -160,7 +160,7 @@ export default function UserManagement() {
 
   return (
     <DashboardLayout>
-      <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 relative">
+      <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-5 relative min-w-0">
         <LoadingOverlay show={loading} message="Updating PIN..." />
         <ModuleHeader
           icon={<Shield size={22} />}
@@ -168,22 +168,22 @@ export default function UserManagement() {
           tagline="Manage your account security settings"
         />
 
-        <div className="max-w-6xl mx-auto mt-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div className="max-w-6xl mx-auto mt-5 sm:mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 items-center">
             {/* Left Image */}
             <div className="flex justify-right lg:justify-center">
               <img
                 src="/user_management.png"
                 alt="User Management"
-                className="w-full max-w-sm"
+                className="w-full max-w-xs sm:max-w-sm mx-auto rounded-xl"
               />
             </div>
 
             {/* Form */}
             <div className="flex justify-center lg:justify-start">
-              <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-xl w-full max-w-md">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
+              <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-md w-full max-w-md">
+                <div className="text-center mb-5">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full mb-3">
                     <Key size={24} className="text-purple-600" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-800 mb-2">
@@ -194,7 +194,7 @@ export default function UserManagement() {
                   </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <InputField
                     label="Current PIN"
                     field="currentPin"

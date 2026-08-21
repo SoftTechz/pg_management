@@ -353,14 +353,14 @@ function RoomCard({ room, index, onOpen }) {
   return (
     <article
       onClick={() => onOpen(room)}
-      className="bg-gray-50 rounded-xl border border-gray-200 p-4 cursor-pointer"
+      className="bg-white rounded-xl border border-slate-200 p-3 cursor-pointer shadow-sm"
     >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold text-purple-700">
             S.No {index + 1}
           </p>
-          <h3 className="font-semibold text-gray-900">
+          <h3 className="font-semibold text-gray-900 text-sm sm:text-base line-clamp-2 leading-5">
             Room {room.room_number || "-"}
           </h3>
         </div>

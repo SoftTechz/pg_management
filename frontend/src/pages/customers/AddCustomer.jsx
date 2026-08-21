@@ -133,7 +133,7 @@ export default function AddCustomer() {
   return (
     <DashboardLayout>
       <div className="w-full">
-        <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6 relative min-w-0">
+        <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-5 relative min-w-0">
           <LoadingOverlay show={loading} message="Creating customer..." />
           <ModuleHeader
             icon={<Users size={22} />}
@@ -153,14 +153,14 @@ export default function AddCustomer() {
           />
 
           <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
-            <div className="border-b border-gray-200 mb-3"></div>
+            <div className="border-b border-gray-200 mb-2"></div>
 
             <section>
               <SectionHeader
                 title="Customer Details"
                 icon={<ClipboardList size={18} />}
               />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <TextField
                   label="Name"
                   name="name"
@@ -232,7 +232,7 @@ export default function AddCustomer() {
                 title="Work And Family"
                 icon={<BriefcaseBusiness size={18} />}
               />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <TextArea
                   label="Working Details"
                   name="workingDetails"
@@ -269,7 +269,7 @@ export default function AddCustomer() {
                 title="Address And Admission"
                 icon={<Home size={18} />}
               />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <TextArea
                   label="Permanent Address"
                   name="permanentAddress"
@@ -277,7 +277,7 @@ export default function AddCustomer() {
                   onChange={handleChange}
                   placeholder="Enter permanent address"
                 />
-                <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-5">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4">
                   <div>
                     <label
                       htmlFor="roomNumber"
@@ -314,7 +314,7 @@ export default function AddCustomer() {
               </div>
             </section>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 md:pt-5 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-2.5 pt-4 border-t border-gray-200">
               <button
                 type="submit"
                 disabled={loading}

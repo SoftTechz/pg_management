@@ -181,7 +181,7 @@ export default function HospitalDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 relative">
+      <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-5 relative min-w-0">
         <ModuleHeader
           icon={<Users size={22} />}
           title="Dashboard"
@@ -195,21 +195,21 @@ export default function HospitalDashboard() {
         <div className="max-w-[1300px] mx-auto space-y-6">
           {/* Stats cards */}
           <section>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-3">
               {(statsLoading ? new Array(4).fill(0) : cards).map(
                 (item, idx) => (
                   <article
                     key={item?.title ?? idx}
-                    className={`rounded-xl bg-white p-5 shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-md ${
+                    className={`rounded-xl bg-white p-3 sm:p-4 shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-md ${
                       statsLoading ? "animate-pulse" : ""
                     }`}
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="text-sm uppercase tracking-wide text-slate-500">
+                        <p className="text-[10px] sm:text-xs uppercase tracking-wide text-slate-500 leading-tight">
                           {item?.title ?? "Loading"}
                         </p>
-                        <p className="mt-2 text-3xl font-bold text-slate-900">
+                        <p className="mt-1.5 text-xl sm:text-2xl font-bold text-slate-900 break-words">
                           {statsLoading ? "--" : item.value}
                         </p>
                       </div>
@@ -235,13 +235,13 @@ export default function HospitalDashboard() {
             </div>
           </section>
 
-          <section className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm">
+          <section className="rounded-xl bg-white p-3 sm:p-4 shadow-sm">
             <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">
+                <h2 className="text-base sm:text-lg font-semibold text-slate-900">
                   Monthly Rent Payments
                 </h2>
-                <p className="text-sm text-slate-500">
+                <p className="text-xs sm:text-sm text-slate-500">
                   Customers without a paid record are pending from the 5th of
                   the month.
                 </p>

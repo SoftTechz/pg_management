@@ -61,16 +61,16 @@ export default function Login() {
   }
 
   return (
-    <main className="min-h-screen bg-[#eef4f1] p-3 sm:p-6 lg:p-10 flex items-center justify-center">
-      <div className="w-full max-w-6xl min-h-[620px] overflow-hidden rounded-[2rem] bg-white shadow-2xl shadow-emerald-950/10 grid lg:grid-cols-[1.05fr_.95fr]">
-        <section className="relative min-h-[260px] lg:min-h-full overflow-hidden bg-emerald-950">
+    <main className="min-h-screen bg-[#eef4f1] p-2.5 sm:p-4 lg:p-8 flex items-center justify-center">
+      <div className="w-full max-w-6xl min-h-[560px] overflow-hidden rounded-2xl sm:rounded-[2rem] bg-white shadow-2xl shadow-emerald-950/10 grid lg:grid-cols-[1.05fr_.95fr]">
+        <section className="relative min-h-[220px] sm:min-h-[260px] lg:min-h-full overflow-hidden bg-emerald-950">
           <img
             src="/user_management.png"
             alt="Comfortable PG living space"
             className="absolute inset-0 h-full w-full object-cover opacity-75"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/30 to-transparent" />
-          <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-10 text-white">
+          <div className="relative z-10 flex h-full flex-col justify-between p-4 sm:p-7 lg:p-10 text-white">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
                 <img
@@ -85,7 +85,7 @@ export default function Login() {
               <p className="mb-3 text-xs font-bold uppercase tracking-[.25em] text-emerald-200">
                 A calmer way to manage
               </p>
-              <h1 className="text-3xl font-bold leading-tight sm:text-5xl">
+              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold leading-tight">
                 Every room, every resident, in one place.
               </h1>
               <p className="mt-4 max-w-sm text-sm leading-6 text-emerald-50/80">
@@ -96,20 +96,20 @@ export default function Login() {
           </div>
         </section>
 
-        <section className="flex items-center justify-center p-6 sm:p-10 lg:p-14">
+        <section className="flex items-center justify-center p-4 sm:p-7 lg:p-10">
           <div className="w-full max-w-sm">
-            <div className="mb-10">
-              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                <LockKeyhole size={26} />
+            <div className="mb-7">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                <LockKeyhole size={22} />
               </div>
-              <h2 className="text-3xl font-bold tracking-tight text-slate-950">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950">
                 Welcome back
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
                 Enter your 4-digit owner PIN to continue to your workspace.
               </p>
             </div>
-            <div className="flex gap-2.5 sm:gap-3" aria-label="Owner PIN">
+            <div className="flex gap-1.5 sm:gap-2.5" aria-label="Owner PIN">
               {pin.map((digit, index) => (
                 <input
                   key={index}
@@ -124,7 +124,7 @@ export default function Login() {
                   disabled={isSubmitting}
                   onChange={(event) => handleChange(event.target.value, index)}
                   onKeyDown={(event) => handleKeyDown(event, index)}
-                  className="h-14 min-w-0 flex-1 rounded-xl border-2 border-slate-200 bg-slate-50 text-center text-2xl font-semibold text-slate-900 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-100 disabled:opacity-60"
+                  className="h-12 sm:h-14 min-w-0 flex-1 rounded-lg sm:rounded-xl border-2 border-slate-200 bg-slate-50 text-center text-xl sm:text-2xl font-semibold text-slate-900 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-2 sm:focus:ring-4 focus:ring-emerald-100 disabled:opacity-60"
                 />
               ))}
             </div>

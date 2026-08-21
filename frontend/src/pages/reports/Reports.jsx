@@ -122,7 +122,7 @@ export default function Reports() {
 
   return (
     <DashboardLayout>
-      <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 h-full min-h-0 flex flex-col">
+      <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-5 h-full min-h-0 flex flex-col min-w-0">
         <ModuleHeader
           icon={<FileText size={22} />}
           title="Reports"
@@ -140,7 +140,7 @@ export default function Reports() {
           }
         />
         <nav
-          className="flex flex-wrap gap-2 border-b border-gray-200 mb-5 shrink-0"
+          className="flex flex-wrap gap-1 border-b border-gray-200 mb-4 shrink-0"
           aria-label="Report submodules"
         >
           {REPORTS.map(([key, label]) => (
@@ -151,13 +151,13 @@ export default function Reports() {
                 setReport(key);
                 setSearchParams({ report: key });
               }}
-              className={`px-3 py-2.5 text-sm font-semibold border-b-2 ${report === key ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500"}`}
+              className={`px-2.5 py-2 text-xs sm:text-sm font-semibold border-b-2 ${report === key ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500"}`}
             >
               {label}
             </button>
           ))}
         </nav>
-        <div className="flex flex-col sm:flex-row gap-3 mb-5">
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
           {report === "monthly" && (
             <>
               <input
