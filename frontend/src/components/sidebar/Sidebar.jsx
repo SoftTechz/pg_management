@@ -1,9 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
-  CalendarDays,
   Users,
-  Package,
   LogOut,
   X,
   Shield,
@@ -25,19 +23,18 @@ export default function Sidebar({ isOpen, onClose }) {
       path: "/dashboard",
     },
     // { name: "Invoices", icon: <FileText size={18} />, path: "/invoices" },
-    { name: "Patients", icon: <Users size={18} />, path: "/customers" },
+    { name: "Rooms", icon: <Users size={18} />, path: "/rooms" },
+    { name: "Customers", icon: <Users size={18} />, path: "/customers" },
     {
-      name: "Appointments",
-      icon: <CalendarDays size={18} />,
-      path: "/appointments",
-    },
-    { name: "Billing", icon: <FileText size={18} />, path: "/billing" },
-    { name: "Drugs", icon: <Package size={18} />, path: "/drugs" },
-    {
-      name: "Report",
+      name: "Reports",
       icon: <FileText size={18} />,
       key: "report",
-      children: [{ name: "Appointments", path: "/reports/appointments" }],
+      children: [
+        { name: "Customer Report", path: "/reports?report=customers" },
+        { name: "Room Report", path: "/reports?report=rooms" },
+        { name: "Monthly Payment Report", path: "/reports?report=monthly" },
+        { name: "Payment History", path: "/reports?report=history" },
+      ],
     },
     {
       name: "User Management",
@@ -56,9 +53,18 @@ export default function Sidebar({ isOpen, onClose }) {
   };
 
   const isMenuActive = useMemo(
-    () => (path) =>
-      location.pathname === path || location.pathname.startsWith(`${path}/`),
-    [location.pathname],
+    () => (path) => {
+      const [pathname, query] = path.split("?");
+      const matchesPath =
+        location.pathname === pathname ||
+        location.pathname.startsWith(`${pathname}/`);
+      if (!matchesPath || !query) return matchesPath;
+      return (
+        new URLSearchParams(query).get("report") ===
+        new URLSearchParams(location.search).get("report")
+      );
+    },
+    [location.pathname, location.search],
   );
 
   const toggleMenu = (key) => {
@@ -77,7 +83,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static top-18 left-0 w-64 bg-white text-slate-800 h-[calc(100vh-80px)] lg:h-screen lg:flex lg:flex-col px-6 py-6 z-40 transform transition-transform duration-300 ease-in-out overflow-y-auto border-r border-slate-200 ${
+        className={`fixed lg:sticky top-16 left-0 w-56 bg-white text-slate-800 h-[calc(100vh-64px)] lg:h-[calc(100vh-64px)] lg:flex lg:flex-col px-4 py-4 z-40 transform transition-transform duration-300 ease-in-out overflow-y-auto border-r border-slate-200 ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -94,14 +100,14 @@ export default function Sidebar({ isOpen, onClose }) {
           <X size={24} />
         </button>
 
-        <ul className="space-y-2">
+        <ul className="space-y-1">
           {menu.map((item) => {
             if (!item.children) {
               const isActive = isMenuActive(item.path);
               return (
                 <li
                   key={item.name}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition duration-200 ${
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition duration-200 ${
                     isActive
                       ? "bg-purple-100 text-purple-700 font-semibold shadow-sm"
                       : "hover:bg-slate-100 text-slate-700"
@@ -109,7 +115,7 @@ export default function Sidebar({ isOpen, onClose }) {
                   onClick={() => handleMenuClick(item.path)}
                 >
                   {item.icon}
-                  <span className="text-sm lg:text-base">{item.name}</span>
+                  <span className="text-sm">{item.name}</span>
                 </li>
               );
             }
@@ -122,7 +128,7 @@ export default function Sidebar({ isOpen, onClose }) {
             return (
               <li key={item.name}>
                 <div
-                  className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl cursor-pointer transition duration-200 ${
+                  className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg cursor-pointer transition duration-200 ${
                     hasActiveChild
                       ? "bg-purple-100 text-purple-700 font-semibold shadow-sm"
                       : "hover:bg-slate-100 text-slate-700"
@@ -131,9 +137,13 @@ export default function Sidebar({ isOpen, onClose }) {
                 >
                   <div className="flex items-center gap-3">
                     {item.icon}
-                    <span className="text-sm lg:text-base">{item.name}</span>
+                    <span className="text-sm">{item.name}</span>
                   </div>
-                  {isOpenMenu ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  {isOpenMenu ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )}
                 </div>
                 {isOpenMenu && (
                   <ul className="mt-1 ml-8 space-y-1">
@@ -142,7 +152,7 @@ export default function Sidebar({ isOpen, onClose }) {
                       return (
                         <li
                           key={child.name}
-                          className={`px-3 py-2 rounded-lg text-sm cursor-pointer transition duration-200 ${
+                          className={`px-3 py-1.5 rounded-md text-xs cursor-pointer transition duration-200 ${
                             isChildActive
                               ? "bg-purple-100 text-purple-700 font-semibold"
                               : "hover:bg-slate-100 text-slate-700"
@@ -163,7 +173,7 @@ export default function Sidebar({ isOpen, onClose }) {
         <div className="mt-auto pt-4 ">
           <div className="mb-4 flex items-center justify-center">
             <img
-              src="sidebarimage.png"
+              src="image.png"
               alt="Sidebar decoration"
               className="w-60 h-auto object-contain"
             />
@@ -172,11 +182,11 @@ export default function Sidebar({ isOpen, onClose }) {
             {logoutMenu.map((item) => (
               <li
                 key={item.name}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-slate-100 transition duration-200 text-slate-700"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-100 transition duration-200 text-slate-700"
                 onClick={() => handleMenuClick(item.path)}
               >
                 {item.icon}
-                <span className="text-sm lg:text-base">{item.name}</span>
+                <span className="text-sm">{item.name}</span>
               </li>
             ))}
           </ul>

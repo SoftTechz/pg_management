@@ -18,11 +18,11 @@ router = APIRouter()
 
 
 REPORT_COLUMNS = [
-    ("Owner Name", "customerName"),
+    ("Room Name", "roomName"),
     ("Phone Number", "phone"),
-    ("Pet Name", "petName"),
-    ("Pet Type", "petType"),
-    ("Appointment Date", "date"),
+    ("Tenant Name", "petName"),
+    ("Room Type", "petType"),
+    ("Allocation Date", "date"),
     ("Doctor Fee", "doctorFee"),
     ("Status", "status"),
 ]
@@ -58,7 +58,7 @@ def _normalize_report_row(doc) -> dict[str, Any]:
     data = doc.to_dict() or {}
     return {
         "id": doc.id,
-        "customerName": data.get("customerName") or "-",
+        "roomName": data.get("roomName") or "-",
         "phone": data.get("phone") or "-",
         "petName": data.get("petName") or "-",
         "petType": data.get("petType") or "-",
@@ -68,11 +68,11 @@ def _normalize_report_row(doc) -> dict[str, Any]:
     }
 
 
-def _fetch_all_filtered_appointments(
+def _fetch_all_filtered_allocations(
     db, from_date: date | None, to_date: date | None
 ) -> list[dict[str, Any]]:
     filters = _build_filters(from_date, to_date)
-    query = db.collection("appointments")
+    query = db.collection("allocations")
     query = _apply_filters(query, filters)
     query = query.order_by("date", direction="DESCENDING").order_by(
         "created_at", direction="DESCENDING"
@@ -92,8 +92,8 @@ def _date_range_label(from_date: date | None, to_date: date | None) -> str:
     return "All dates"
 
 
-@router.get("/appointments")
-def get_appointments_report(
+@router.get("/allocations")
+def get_allocations_report(
     from_date: str | None = Query(default=None),
     to_date: str | None = Query(default=None),
     limit: int = Query(default=10, ge=1, le=100),
@@ -108,10 +108,10 @@ def get_appointments_report(
         )
 
     db = get_firestore()
-    appointments_ref = db.collection("appointments")
+    allocations_ref = db.collection("allocations")
     filters = _build_filters(parsed_from, parsed_to)
 
-    query = _apply_filters(appointments_ref, filters)
+    query = _apply_filters(allocations_ref, filters)
     query = query.order_by("date", direction="DESCENDING").order_by(
         "created_at", direction="DESCENDING"
     )
@@ -128,11 +128,11 @@ def get_appointments_report(
     docs = all_docs[start_idx : start_idx + limit + 1]
     has_next = len(docs) > limit
     selected_docs = docs[:limit]
-    appointments = [_normalize_report_row(doc) for doc in selected_docs]
+    allocations = [_normalize_report_row(doc) for doc in selected_docs]
     next_cursor = selected_docs[-1].id if has_next and selected_docs else None
 
     return {
-        "appointments": appointments,
+        "allocations": allocations,
         "limit": limit,
         "next_cursor": next_cursor,
         "has_next": has_next,
@@ -140,8 +140,8 @@ def get_appointments_report(
     }
 
 
-@router.get("/appointments/export/excel")
-def export_appointments_report_excel(
+@router.get("/allocations/export/excel")
+def export_allocations_report_excel(
     from_date: str | None = Query(default=None),
     to_date: str | None = Query(default=None),
 ):
@@ -154,23 +154,23 @@ def export_appointments_report_excel(
         )
 
     db = get_firestore()
-    appointments = _fetch_all_filtered_appointments(db, parsed_from, parsed_to)
+    allocations = _fetch_all_filtered_allocations(db, parsed_from, parsed_to)
     date_range = _date_range_label(parsed_from, parsed_to)
 
     workbook = Workbook()
     sheet = workbook.active
-    sheet.title = "Appointments Report"
+    sheet.title = "Allocations Report"
 
-    sheet.append(["Appointments Report"])
+    sheet.append(["Allocations Report"])
     sheet.append([f"Date Range: {date_range}"])
-    sheet.append([f"Total Appointments: {len(appointments)}"])
+    sheet.append([f"Total Allocations: {len(allocations)}"])
     sheet.append([])
     sheet.append([column_title for column_title, _ in REPORT_COLUMNS])
 
-    for appointment in appointments:
+    for allocation in allocations:
         row = []
         for _, key in REPORT_COLUMNS:
-            value = appointment.get(key)
+            value = allocation.get(key)
             if key == "doctorFee":
                 try:
                     value = float(value or 0)
@@ -191,7 +191,7 @@ def export_appointments_report_excel(
     workbook.save(output)
     output.seek(0)
 
-    filename = f"appointments_report_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.xlsx"
+    filename = f"allocations_report_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.xlsx"
     return StreamingResponse(
         output,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -199,8 +199,8 @@ def export_appointments_report_excel(
     )
 
 
-@router.get("/appointments/export/pdf")
-def export_appointments_report_pdf(
+@router.get("/allocations/export/pdf")
+def export_allocations_report_pdf(
     from_date: str | None = Query(default=None),
     to_date: str | None = Query(default=None),
 ):
@@ -213,7 +213,7 @@ def export_appointments_report_pdf(
         )
 
     db = get_firestore()
-    appointments = _fetch_all_filtered_appointments(db, parsed_from, parsed_to)
+    allocations = _fetch_all_filtered_allocations(db, parsed_from, parsed_to)
     date_range = _date_range_label(parsed_from, parsed_to)
     generated_on = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
@@ -229,30 +229,30 @@ def export_appointments_report_pdf(
 
     styles = getSampleStyleSheet()
     elements = [
-        Paragraph("Appointments Report", styles["Title"]),
+        Paragraph("Allocations Report", styles["Title"]),
         Spacer(1, 8),
         Paragraph(f"Date Range: {date_range}", styles["Normal"]),
-        Paragraph(f"Total Appointments: {len(appointments)}", styles["Normal"]),
+        Paragraph(f"Total Allocations: {len(allocations)}", styles["Normal"]),
         Paragraph(f"Generated On: {generated_on}", styles["Normal"]),
         Spacer(1, 12),
     ]
 
     table_data: list[list[str]] = [[column_title for column_title, _ in REPORT_COLUMNS]]
-    if appointments:
-        for appointment in appointments:
+    if allocations:
+        for allocation in allocations:
             table_data.append(
                 [
-                    str(appointment.get("customerName", "-")),
-                    str(appointment.get("phone", "-")),
-                    str(appointment.get("petName", "-")),
-                    str(appointment.get("petType", "-")),
-                    str(appointment.get("date", "-")),
-                    str(appointment.get("doctorFee", 0)),
-                    str(appointment.get("status", "active")),
+                    str(allocation.get("roomName", "-")),
+                    str(allocation.get("phone", "-")),
+                    str(allocation.get("petName", "-")),
+                    str(allocation.get("petType", "-")),
+                    str(allocation.get("date", "-")),
+                    str(allocation.get("doctorFee", 0)),
+                    str(allocation.get("status", "active")),
                 ]
             )
     else:
-        table_data.append(["No appointments found", "", "", "", "", "", ""])
+        table_data.append(["No allocations found", "", "", "", "", "", ""])
 
     table = Table(table_data, repeatRows=1)
     table_style_commands = [
@@ -264,7 +264,7 @@ def export_appointments_report_pdf(
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("ALIGN", (0, 0), (-1, -1), "LEFT"),
     ]
-    if not appointments:
+    if not allocations:
         table_style_commands.extend(
             [
                 ("SPAN", (0, 1), (-1, 1)),
@@ -277,7 +277,7 @@ def export_appointments_report_pdf(
     doc.build(elements)
     output.seek(0)
 
-    filename = f"appointments_report_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.pdf"
+    filename = f"allocations_report_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.pdf"
     return StreamingResponse(
         output,
         media_type="application/pdf",

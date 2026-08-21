@@ -9,7 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { deleteDrug, getDrugById, updateDrug } from "@/services/drug_service";
+import { deleteInventoryItem, getInventoryItemById, updateInventoryItem } from "@/services/inventoryItem_service";
 import ModuleHeader from "@/components/ui/ModuleHeader";
 import SectionHeader from "@/components/ui/SectionHeader";
 
@@ -33,15 +33,15 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 2,
   }).format(Number(value || 0));
 
-export default function UpdateDrug() {
-  const { drugId } = useParams();
+export default function UpdateInventoryItem() {
+  const { inventoryItemId } = useParams();
   const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [drug, setDrug] = useState(null);
+  const [inventoryItem, setInventoryItem] = useState(null);
   const [formData, setFormData] = useState({
     date: today,
     quantity: "",
@@ -51,32 +51,32 @@ export default function UpdateDrug() {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (drugId) {
-      fetchDrug();
+    if (inventoryItemId) {
+      fetchInventoryItem();
     }
-  }, [drugId]);
+  }, [inventoryItemId]);
 
-  const fetchDrug = async () => {
+  const fetchInventoryItem = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getDrugById(drugId);
-      const fetchedDrug = response.drug || null;
-      setDrug(fetchedDrug);
-      const latestEntry = fetchedDrug?.history?.[0] || null;
+      const response = await getInventoryItemById(inventoryItemId);
+      const fetchedInventoryItem = response.inventoryItem || null;
+      setInventoryItem(fetchedInventoryItem);
+      const latestEntry = fetchedInventoryItem?.history?.[0] || null;
       setFormData((prev) => ({
         ...prev,
         gstPercent: String(latestEntry?.gstPercent ?? 0),
       }));
     } catch (err) {
-      setError("Failed to load drug details.");
-      console.error("Error fetching drug:", err);
+      setError("Failed to load inventoryItem details.");
+      console.error("Error fetching inventoryItem:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const totalEntries = useMemo(() => drug?.history?.length || 0, [drug]);
+  const totalEntries = useMemo(() => inventoryItem?.history?.length || 0, [inventoryItem]);
   const subTotal = useMemo(
     () => Number(formData.quantity || 0) * Number(formData.price || 0),
     [formData.quantity, formData.price],
@@ -132,19 +132,19 @@ export default function UpdateDrug() {
       setSaving(true);
       setError(null);
 
-      await updateDrug(drugId, {
+      await updateInventoryItem(inventoryItemId, {
         date: formData.date,
         quantity: Number(formData.quantity),
         price: Number(formData.price),
         gstPercent: Number(formData.gstPercent || 0),
       });
 
-      toast.success("Drug updated successfully");
-      navigate("/drugs");
+      toast.success("InventoryItem updated successfully");
+      navigate("/inventoryItems");
     } catch (err) {
-      setError("Failed to update drug.");
-      toast.error("Failed to update drug.");
-      console.error("Error updating drug:", err);
+      setError("Failed to update inventoryItem.");
+      toast.error("Failed to update inventoryItem.");
+      console.error("Error updating inventoryItem:", err);
       setSaving(false);
     }
   };
@@ -152,17 +152,17 @@ export default function UpdateDrug() {
   const handleDelete = async () => {
     if (
       window.confirm(
-        "Are you sure you want to delete this drug? This action cannot be undone.",
+        "Are you sure you want to delete this inventoryItem? This action cannot be undone.",
       )
     ) {
       try {
         setSaving(true);
-        await deleteDrug(drugId);
-        toast.success("Drug deleted successfully");
-        navigate("/drugs");
+        await deleteInventoryItem(inventoryItemId);
+        toast.success("InventoryItem deleted successfully");
+        navigate("/inventoryItems");
       } catch {
-        setError("Failed to delete drug.");
-        toast.error("Failed to delete drug.");
+        setError("Failed to delete inventoryItem.");
+        toast.error("Failed to delete inventoryItem.");
         setSaving(false);
       }
     }
@@ -178,18 +178,18 @@ export default function UpdateDrug() {
     );
   }
 
-  if (!drug) {
+  if (!inventoryItem) {
     return (
       <DashboardLayout>
         <div className="bg-white rounded-2xl shadow-lg p-8">
-          <p className="text-gray-600">Drug not found.</p>
+          <p className="text-gray-600">InventoryItem not found.</p>
           <button
             type="button"
-            onClick={() => navigate("/drugs")}
+            onClick={() => navigate("/inventoryItems")}
             className="mt-4 inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
           >
             <ArrowLeft size={16} />
-            Back to Drugs
+            Back to InventoryItems
           </button>
         </div>
       </DashboardLayout>
@@ -208,12 +208,12 @@ export default function UpdateDrug() {
 
           <ModuleHeader
             icon={<Package size={22} />}
-            title="Update Drug"
+            title="Update InventoryItem"
             tagline="Manage stock entries and history"
             action={
               <button
                 type="button"
-                onClick={() => navigate("/drugs")}
+                onClick={() => navigate("/inventoryItems")}
                 className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
               >
                 <ArrowLeft size={16} />
@@ -226,39 +226,39 @@ export default function UpdateDrug() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className="rounded-xl border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Drug Name</p>
+              <p className="text-sm text-gray-500">InventoryItem Name</p>
               <p className="text-lg font-semibold text-gray-800 mt-1">
-                {drug.name}
+                {inventoryItem.name}
               </p>
             </div>
             <div className="rounded-xl border border-gray-200 p-4">
               <p className="text-sm text-gray-500">Last Added Date</p>
               <p className="text-lg font-semibold text-gray-800 mt-1">
-                {formatDate(drug.lastAddedDate)}
+                {formatDate(inventoryItem.lastAddedDate)}
               </p>
             </div>
             <div className="rounded-xl border border-gray-200 p-4">
               <p className="text-sm text-gray-500">Present Quantity</p>
               <p className="text-lg font-semibold text-gray-800 mt-1">
-                {drug.presentQuantity}
+                {inventoryItem.presentQuantity}
               </p>
             </div>
             <div className="rounded-xl border border-gray-200 p-4">
               <p className="text-sm text-gray-500">Added On</p>
               <p className="text-lg font-semibold text-gray-800 mt-1">
-                {formatDate(drug.addedOn)}
+                {formatDate(inventoryItem.addedOn)}
               </p>
             </div>
             <div className="rounded-xl border border-gray-200 p-4">
               <p className="text-sm text-gray-500">Latest Price</p>
               <p className="text-lg font-semibold text-gray-800 mt-1">
-                {formatCurrency(drug.latestPrice)}
+                {formatCurrency(inventoryItem.latestPrice)}
               </p>
             </div>
             <div className="rounded-xl border border-gray-200 p-4">
               <p className="text-sm text-gray-500">Total Bill</p>
               <p className="text-lg font-semibold text-gray-800 mt-1">
-                {formatCurrency(drug.totalBill)}
+                {formatCurrency(inventoryItem.totalBill)}
               </p>
             </div>
           </div>
@@ -397,14 +397,14 @@ export default function UpdateDrug() {
                 className="flex-1 flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg justify-center"
               >
                 <Trash2 size={20} />
-                Delete Drug
+                Delete InventoryItem
               </button>
             </div>
           </form>
 
           <div className="mt-10">
-            <SectionHeader title={`Drug History (${totalEntries})`} />
-            {drug.history?.length ? (
+            <SectionHeader title={`InventoryItem History (${totalEntries})`} />
+            {inventoryItem.history?.length ? (
               <div className="overflow-x-auto border border-gray-200 rounded-xl">
                 <table className="w-full">
                   <thead className="bg-gray-50">
@@ -424,7 +424,7 @@ export default function UpdateDrug() {
                     </tr>
                   </thead>
                   <tbody>
-                    {drug.history.map((entry) => (
+                    {inventoryItem.history.map((entry) => (
                       <tr key={entry.id} className="border-t border-gray-100">
                         <td className="px-4 py-3 text-sm text-gray-700">
                           {formatDate(entry.date)}
@@ -445,7 +445,7 @@ export default function UpdateDrug() {
               </div>
             ) : (
               <p className="text-sm text-gray-500">
-                No history found for this drug.
+                No history found for this inventoryItem.
               </p>
             )}
           </div>
@@ -455,7 +455,7 @@ export default function UpdateDrug() {
               <div className="flex flex-col items-center gap-4">
                 <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600"></div>
                 <p className="text-gray-700 font-semibold text-lg">
-                  Updating drug...
+                  Updating inventoryItem...
                 </p>
               </div>
             </div>

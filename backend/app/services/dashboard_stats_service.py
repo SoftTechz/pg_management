@@ -10,13 +10,13 @@ from app.core.firebase import get_firestore
 
 
 DEFAULT_DASHBOARD_STATS = {
-    "total_customers": 0,
-    "total_drugs": 0,
+    "total_rooms": 0,
+    "total_inventoryItems": 0,
     "total_revenue": 0,
-    "total_billing": 0,
-    "total_appointments_active": 0,
-    "total_appointments_completed": 0,
-    "total_appointments_cancelled": 0,
+    "total_payments": 0,
+    "total_allocations_active": 0,
+    "total_allocations_completed": 0,
+    "total_allocations_cancelled": 0,
 }
 
 
@@ -69,7 +69,7 @@ def _increment(field_name: str, value: float | int) -> None:
         doc_ref.update(payload)
 
 
-def _normalize_appointment_status(status: str | None) -> str:
+def _normalize_allocation_status(status: str | None) -> str:
     normalized = (status or "active").strip().lower()
     if normalized in {"active", "completed", "cancelled"}:
         return normalized
@@ -82,66 +82,66 @@ def get_dashboard_stats() -> dict[str, Any]:
     if not doc.exists:
         return {
             **DEFAULT_DASHBOARD_STATS,
-            "total_appointments": 0,
+            "total_allocations": 0,
         }
 
     data = doc.to_dict() or {}
     stats = {**DEFAULT_DASHBOARD_STATS, **data}
-    legacy_closed = int(stats.get("total_appointments_closed", 0) or 0)
+    legacy_closed = int(stats.get("total_allocations_closed", 0) or 0)
     if legacy_closed:
-        stats["total_appointments_completed"] = (
-            int(stats.get("total_appointments_completed", 0) or 0) + legacy_closed
+        stats["total_allocations_completed"] = (
+            int(stats.get("total_allocations_completed", 0) or 0) + legacy_closed
         )
-    stats["total_appointments"] = (
-        int(stats.get("total_appointments_active", 0) or 0)
-        + int(stats.get("total_appointments_completed", 0) or 0)
-        + int(stats.get("total_appointments_cancelled", 0) or 0)
+    stats["total_allocations"] = (
+        int(stats.get("total_allocations_active", 0) or 0)
+        + int(stats.get("total_allocations_completed", 0) or 0)
+        + int(stats.get("total_allocations_cancelled", 0) or 0)
     )
     return stats
 
 
-def increment_customers() -> None:
-    _increment("total_customers", 1)
+def increment_rooms() -> None:
+    _increment("total_rooms", 1)
 
 
-def decrement_customers() -> None:
-    _increment("total_customers", -1)
+def decrement_rooms() -> None:
+    _increment("total_rooms", -1)
 
 
-def increment_drugs() -> None:
-    _increment("total_drugs", 1)
+def increment_inventoryItems() -> None:
+    _increment("total_inventoryItems", 1)
 
 
-def decrement_drugs() -> None:
-    _increment("total_drugs", -1)
+def decrement_inventoryItems() -> None:
+    _increment("total_inventoryItems", -1)
 
 
-# def update_drug_quantity(delta_quantity: int | int) -> None:
-#     _increment("total_drugs", delta_quantity)
+# def update_inventoryItem_quantity(delta_quantity: int | int) -> None:
+#     _increment("total_inventoryItems", delta_quantity)
 
 
-def increment_active_appointments() -> None:
-    _increment("total_appointments_active", 1)
+def increment_active_allocations() -> None:
+    _increment("total_allocations_active", 1)
 
 
-def decrement_active_appointments() -> None:
-    _increment("total_appointments_active", -1)
+def decrement_active_allocations() -> None:
+    _increment("total_allocations_active", -1)
 
 
-def increment_completed_appointments() -> None:
-    _increment("total_appointments_completed", 1)
+def increment_completed_allocations() -> None:
+    _increment("total_allocations_completed", 1)
 
 
-def decrement_completed_appointments() -> None:
-    _increment("total_appointments_completed", -1)
+def decrement_completed_allocations() -> None:
+    _increment("total_allocations_completed", -1)
 
 
-def increment_cancelled_appointments() -> None:
-    _increment("total_appointments_cancelled", 1)
+def increment_cancelled_allocations() -> None:
+    _increment("total_allocations_cancelled", 1)
 
 
-def decrement_cancelled_appointments() -> None:
-    _increment("total_appointments_cancelled", -1)
+def decrement_cancelled_allocations() -> None:
+    _increment("total_allocations_cancelled", -1)
 
 
 def increment_revenue(amount: float | int) -> None:
@@ -152,75 +152,75 @@ def decrement_revenue(amount: float | int) -> None:
     _increment("total_revenue", -abs(float(amount or 0)))
 
 
-def increment_billing() -> None:
-    _increment("total_billing", 1)
+def increment_payments() -> None:
+    _increment("total_payments", 1)
 
 
-def decrement_billing() -> None:
-    _increment("total_billing", -1)
+def decrement_payments() -> None:
+    _increment("total_payments", -1)
 
 
-def apply_appointment_status_delta(
+def apply_allocation_status_delta(
     old_status: str | None, new_status: str | None
 ) -> None:
     previous = (
-        _normalize_appointment_status(old_status) if old_status is not None else None
+        _normalize_allocation_status(old_status) if old_status is not None else None
     )
     current = (
-        _normalize_appointment_status(new_status) if new_status is not None else None
+        _normalize_allocation_status(new_status) if new_status is not None else None
     )
 
     if previous == current:
         return
 
     if previous == "active":
-        decrement_active_appointments()
+        decrement_active_allocations()
     elif previous == "completed":
-        decrement_completed_appointments()
+        decrement_completed_allocations()
     elif previous == "cancelled":
-        decrement_cancelled_appointments()
+        decrement_cancelled_allocations()
 
     if current == "active":
-        increment_active_appointments()
+        increment_active_allocations()
     elif current == "completed":
-        increment_completed_appointments()
+        increment_completed_allocations()
     elif current == "cancelled":
-        increment_cancelled_appointments()
+        increment_cancelled_allocations()
 
 
 def status_bucket(status: str | None) -> str:
-    return _normalize_appointment_status(status)
+    return _normalize_allocation_status(status)
 
 
 # Backward-compatible aliases.
-def increment_closed_appointments() -> None:
-    increment_completed_appointments()
+def increment_closed_allocations() -> None:
+    increment_completed_allocations()
 
 
-def decrement_closed_appointments() -> None:
-    decrement_completed_appointments()
+def decrement_closed_allocations() -> None:
+    decrement_completed_allocations()
 
 
 def rebuild_dashboard_stats() -> dict[str, Any]:
     db = get_firestore()
 
-    total_customers = 0
-    for _ in db.collection("customers").stream():
-        total_customers += 1
+    total_rooms = 0
+    for _ in db.collection("rooms").stream():
+        total_rooms += 1
 
-    total_drugs = 0
-    for _ in db.collection("drugs").stream():
-        total_drugs += 1
+    total_inventoryItems = 0
+    for _ in db.collection("inventoryItems").stream():
+        total_inventoryItems += 1
 
-    total_billing = 0
-    for _ in db.collection("billing").stream():
-        total_billing += 1
+    total_payments = 0
+    for _ in db.collection("payments").stream():
+        total_payments += 1
 
     total_revenue = 0.0
     total_active = 0
     total_completed = 0
     total_cancelled = 0
-    for doc in db.collection("appointments").stream():
+    for doc in db.collection("allocations").stream():
         data = doc.to_dict() or {}
         bucket = status_bucket(data.get("status"))
         if bucket == "active":
@@ -235,13 +235,13 @@ def rebuild_dashboard_stats() -> dict[str, Any]:
             total_cancelled += 1
 
     rebuilt = {
-        "total_customers": int(total_customers),
-        "total_drugs": int(total_drugs),
+        "total_rooms": int(total_rooms),
+        "total_inventoryItems": int(total_inventoryItems),
         "total_revenue": float(total_revenue),
-        "total_billing": int(total_billing),
-        "total_appointments_active": int(total_active),
-        "total_appointments_completed": int(total_completed),
-        "total_appointments_cancelled": int(total_cancelled),
+        "total_payments": int(total_payments),
+        "total_allocations_active": int(total_active),
+        "total_allocations_completed": int(total_completed),
+        "total_allocations_cancelled": int(total_cancelled),
         # "updated_at": datetime.utcnow(),
     }
 

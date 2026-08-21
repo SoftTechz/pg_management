@@ -1,7 +1,12 @@
 import api from "@/config/axios";
 
 export const getDashboardStats = async () => {
-  const res = await api.get("/dashboard/stats");
+  const res = await api.get("/dashboard");
+  return res.data;
+};
+
+export const getMonthlyPayments = async (month) => {
+  const res = await api.get("/payments/monthly", { params: { month } });
   return res.data;
 };
 

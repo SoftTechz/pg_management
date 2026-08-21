@@ -10,29 +10,27 @@ export default function DashboardLayout({ children }) {
   const closeSidebar = () => setIsSidebarOpen(false);
 
   return (
-    <div className="bg-purple-100 min-h-screen">
+    <div className="bg-purple-100 min-h-screen flex flex-col pt-16">
       <Navbar onMenuToggle={toggleSidebar} />
       <Toaster position="top-right" />
 
-      <div className="flex pt-15">
+      <div className="flex flex-1 items-start">
         <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
 
-        <div className="flex-1 flex flex-col min-h-[calc(100vh-80px)]">
-          <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
-            {children}
-          </main>
-          <footer className="px-4 md:px-6 lg:px-8 py-4 border-t border-gray-200 bg-white">
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+        <div className="flex-1 min-w-0 flex flex-col">
+          <main className="flex-1 p-3 sm:p-4 md:p-5 lg:p-3">{children}</main>
+          {/* <footer className="px-3 sm:px-4 md:px-5 lg:px-6 py-2 border-t border-gray-200 bg-white">
+            <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
               <img
                 src="SoftTechz_logo_and_name.png"
                 alt="SoftTechz Logo"
-                className="h-6 object-contain"
+                className="h-4 object-contain"
               />
               <span>
                 © {new Date().getFullYear()} SoftTechz. All rights reserved.
               </span>
             </div>
-          </footer>
+          </footer> */}
         </div>
       </div>
     </div>

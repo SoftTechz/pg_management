@@ -15,13 +15,13 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
-  adjustDrugQuantity,
-  deleteDrug,
-  deleteDrugHistoryEntry,
-  getAllDrugs,
-  getDrugById,
-  updateDrugName,
-} from "@/services/drug_service";
+  adjustInventoryItemQuantity,
+  deleteInventoryItem,
+  deleteInventoryItemHistoryEntry,
+  getAllInventoryItems,
+  getInventoryItemById,
+  updateInventoryItemName,
+} from "@/services/inventoryItem_service";
 import { getDashboardStats } from "@/services/dashboard_service";
 import ModuleHeader from "@/components/ui/ModuleHeader";
 
@@ -45,11 +45,11 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 2,
   }).format(Number(value || 0));
 
-export default function ListDrug() {
+export default function ListInventoryItem() {
   const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
 
-  const [drugs, setDrugs] = useState([]);
+  const [inventoryItems, setInventoryItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeSearchTerm, setActiveSearchTerm] = useState("");
@@ -57,8 +57,8 @@ export default function ListDrug() {
   const [cursorHistory, setCursorHistory] = useState([]);
   const [nextCursor, setNextCursor] = useState(null);
   const [hasNext, setHasNext] = useState(false);
-  // const [totalDrugs, setTotalDrugs] = useState(0);
-  const [drugsPerPage] = useState(10);
+  // const [totalInventoryItems, setTotalInventoryItems] = useState(0);
+  const [inventoryItemsPerPage] = useState(10);
   const [error, setError] = useState(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const requestIdRef = useRef(0);
@@ -67,7 +67,7 @@ export default function ListDrug() {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedDrug, setSelectedDrug] = useState(null);
+  const [selectedInventoryItem, setSelectedInventoryItem] = useState(null);
 
   const [adjustForm, setAdjustForm] = useState({
     date: today,
@@ -105,21 +105,21 @@ export default function ListDrug() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const fetchDrugs = async () => {
+  const fetchInventoryItems = async () => {
     try {
       setLoading(true);
       setError(null);
 
       const activeSearch = activeSearchTerm.length >= 3;
       const params = {
-        limit: drugsPerPage,
+        limit: inventoryItemsPerPage,
         cursor: cursor || undefined,
         search: activeSearch ? activeSearchTerm : undefined,
       };
 
       const requestId = ++requestIdRef.current;
-      const [drugResponse, statsResponse] = await Promise.all([
-        getAllDrugs(params),
+      const [inventoryItemResponse, statsResponse] = await Promise.all([
+        getAllInventoryItems(params),
         // getDashboardStats(),
       ]);
 
@@ -127,14 +127,14 @@ export default function ListDrug() {
         return;
       }
 
-      setDrugs(drugResponse.drugs || []);
-      setNextCursor(drugResponse.next_cursor || null);
-      setHasNext(Boolean(drugResponse.has_next));
-      // setTotalDrugs(statsResponse?.data?.total_drugs ?? 0);
+      setInventoryItems(inventoryItemResponse.inventoryItems || []);
+      setNextCursor(inventoryItemResponse.next_cursor || null);
+      setHasNext(Boolean(inventoryItemResponse.has_next));
+      // setTotalInventoryItems(statsResponse?.data?.total_inventoryItems ?? 0);
       setIsInitialLoad(false);
     } catch (err) {
-      setError("Failed to load drugs. Please try again later.");
-      console.error("Error fetching drugs:", err);
+      setError("Failed to load inventoryItems. Please try again later.");
+      console.error("Error fetching inventoryItems:", err);
     } finally {
       setLoading(false);
     }
@@ -147,28 +147,28 @@ export default function ListDrug() {
     if (!activeSearch && !shouldFetchAll) {
       return;
     }
-    fetchDrugs();
+    fetchInventoryItems();
   }, [cursor, activeSearchTerm]);
 
-  const refreshSelectedDrug = async (drugId) => {
-    if (!drugId) return;
+  const refreshSelectedInventoryItem = async (inventoryItemId) => {
+    if (!inventoryItemId) return;
     try {
-      const response = await getDrugById(drugId);
-      setSelectedDrug(response.drug || null);
+      const response = await getInventoryItemById(inventoryItemId);
+      setSelectedInventoryItem(response.inventoryItem || null);
     } catch {
-      setSelectedDrug(null);
+      setSelectedInventoryItem(null);
     }
   };
 
-  const startIndex = cursorHistory.length * drugsPerPage;
-  const paginatedDrugs = drugs;
-  // const displayedTotal = totalDrugs;
+  const startIndex = cursorHistory.length * inventoryItemsPerPage;
+  const paginatedInventoryItems = inventoryItems;
+  // const displayedTotal = totalInventoryItems;
 
   const closeAllModals = () => {
     setIsViewOpen(false);
     setIsAdjustOpen(false);
     setIsEditOpen(false);
-    setSelectedDrug(null);
+    setSelectedInventoryItem(null);
     setAdjustForm({
       date: today,
       adjustmentType: "add",
@@ -181,15 +181,15 @@ export default function ListDrug() {
     setEditName("");
   };
 
-  const openViewModal = async (drugId) => {
-    await refreshSelectedDrug(drugId);
+  const openViewModal = async (inventoryItemId) => {
+    await refreshSelectedInventoryItem(inventoryItemId);
     setIsViewOpen(true);
   };
 
-  const openAdjustModal = (drug) => {
-    setSelectedDrug({
-      id: drug.id,
-      name: drug.name,
+  const openAdjustModal = (inventoryItem) => {
+    setSelectedInventoryItem({
+      id: inventoryItem.id,
+      name: inventoryItem.name,
     });
     setAdjustForm({
       date: today,
@@ -203,18 +203,18 @@ export default function ListDrug() {
     setIsAdjustOpen(true);
   };
 
-  const openEditModal = (drug) => {
-    setSelectedDrug({
-      id: drug.id,
-      name: drug.name,
+  const openEditModal = (inventoryItem) => {
+    setSelectedInventoryItem({
+      id: inventoryItem.id,
+      name: inventoryItem.name,
     });
-    setEditName(drug.name || "");
+    setEditName(inventoryItem.name || "");
     setIsEditOpen(true);
   };
 
   const handleAdjustEntry = async (event) => {
     event.preventDefault();
-    if (!selectedDrug?.id) return;
+    if (!selectedInventoryItem?.id) return;
 
     if (!adjustForm.date) {
       toast.error("Date is required.");
@@ -239,7 +239,7 @@ export default function ListDrug() {
 
     try {
       setModalLoading(true);
-      await adjustDrugQuantity(selectedDrug.id, {
+      await adjustInventoryItemQuantity(selectedInventoryItem.id, {
         date: adjustForm.date,
         adjustmentType: adjustForm.adjustmentType,
         quantity: Number(adjustForm.quantity),
@@ -248,9 +248,9 @@ export default function ListDrug() {
         reason: adjustForm.reason.trim(),
         // remark: adjustForm.remark.trim(),
       });
-      await fetchDrugs();
-      await refreshSelectedDrug(selectedDrug.id);
-      toast.success("Drug quantity adjusted successfully.");
+      await fetchInventoryItems();
+      await refreshSelectedInventoryItem(selectedInventoryItem.id);
+      toast.success("InventoryItem quantity adjusted successfully.");
       setIsAdjustOpen(false);
       setIsViewOpen(true);
     } catch (err) {
@@ -265,26 +265,26 @@ export default function ListDrug() {
     }
   };
 
-  const handleRenameDrug = async (event) => {
+  const handleRenameInventoryItem = async (event) => {
     event.preventDefault();
-    if (!selectedDrug?.id) return;
+    if (!selectedInventoryItem?.id) return;
 
     try {
       setModalLoading(true);
-      await updateDrugName(selectedDrug.id, editName);
-      await fetchDrugs();
-      await refreshSelectedDrug(selectedDrug.id);
-      toast.success("Drug name updated successfully.");
+      await updateInventoryItemName(selectedInventoryItem.id, editName);
+      await fetchInventoryItems();
+      await refreshSelectedInventoryItem(selectedInventoryItem.id);
+      toast.success("InventoryItem name updated successfully.");
       setIsEditOpen(false);
       setIsViewOpen(true);
     } catch (err) {
       const detail = err?.response?.data?.detail;
-      if (detail === "Drug name already exists") {
-        toast.error("Drug name already exists.");
-      } else if (detail === "Drug name is required") {
-        toast.error("Drug name is required.");
+      if (detail === "InventoryItem name already exists") {
+        toast.error("InventoryItem name already exists.");
+      } else if (detail === "InventoryItem name is required") {
+        toast.error("InventoryItem name is required.");
       } else {
-        toast.error("Failed to update drug name.");
+        toast.error("Failed to update inventoryItem name.");
       }
     } finally {
       setModalLoading(false);
@@ -292,7 +292,7 @@ export default function ListDrug() {
   };
 
   const handleDeleteHistory = async (entryId) => {
-    if (!selectedDrug?.id) return;
+    if (!selectedInventoryItem?.id) return;
 
     if (!window.confirm("Delete this history entry?")) {
       return;
@@ -300,9 +300,9 @@ export default function ListDrug() {
 
     try {
       setModalLoading(true);
-      await deleteDrugHistoryEntry(selectedDrug.id, entryId);
-      await fetchDrugs();
-      await refreshSelectedDrug(selectedDrug.id);
+      await deleteInventoryItemHistoryEntry(selectedInventoryItem.id, entryId);
+      await fetchInventoryItems();
+      await refreshSelectedInventoryItem(selectedInventoryItem.id);
       toast.success("History entry deleted.");
     } catch {
       toast.error("Failed to delete history entry.");
@@ -311,11 +311,11 @@ export default function ListDrug() {
     }
   };
 
-  const handleDeleteDrug = async () => {
-    if (!selectedDrug?.id) return;
+  const handleDeleteInventoryItem = async () => {
+    if (!selectedInventoryItem?.id) return;
 
     const isConfirmed = window.confirm(
-      `Delete "${selectedDrug.name}"? This action cannot be undone.`,
+      `Delete "${selectedInventoryItem.name}"? This action cannot be undone.`,
     );
     if (!isConfirmed) {
       return;
@@ -323,12 +323,12 @@ export default function ListDrug() {
 
     try {
       setModalLoading(true);
-      await deleteDrug(selectedDrug.id);
-      await fetchDrugs();
-      toast.success("Drug deleted successfully.");
+      await deleteInventoryItem(selectedInventoryItem.id);
+      await fetchInventoryItems();
+      toast.success("InventoryItem deleted successfully.");
       closeAllModals();
     } catch {
-      toast.error("Failed to delete drug.");
+      toast.error("Failed to delete inventoryItem.");
     } finally {
       setModalLoading(false);
     }
@@ -354,15 +354,15 @@ export default function ListDrug() {
       <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6">
         <ModuleHeader
           icon={<Package size={22} />}
-          title="Drug Management"
-          tagline="Manage all drug inventory records"
+          title="InventoryItem Management"
+          tagline="Manage all inventoryItem inventory records"
           action={
             <button
-              onClick={() => navigate("/drugs/add")}
+              onClick={() => navigate("/inventoryItems/add")}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-sm md:text-base font-semibold py-2 md:py-2.5 px-3 md:px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
             >
               <Plus size={18} />
-              Add Drug
+              Add InventoryItem
             </button>
           }
         />
@@ -370,7 +370,7 @@ export default function ListDrug() {
         {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
           <p className="inline-flex items-center gap-2 text-sm text-purple-800 font-bold uppercase tracking-wide">
             <Package size={16} />
-            Total Drugs - {totalDrugs}
+            Total InventoryItems - {totalInventoryItems}
           </p>
         </div> */}
 
@@ -378,7 +378,7 @@ export default function ListDrug() {
           <Search className="absolute left-3 top-3 text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Search by drug name..."
+            placeholder="Search by inventoryItem name..."
             value={searchTerm}
             onChange={(e) => {
               const value = e.target.value;
@@ -407,13 +407,13 @@ export default function ListDrug() {
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
           </div>
-        ) : !isInitialLoad && paginatedDrugs.length === 0 ? (
+        ) : !isInitialLoad && paginatedInventoryItems.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No drugs found</p>
+            <p className="text-gray-500 text-lg">No inventoryItems found</p>
             <p className="text-gray-400 mt-2">
               {searchTerm
                 ? "Try adjusting your search"
-                : "Add your first drug to get started"}
+                : "Add your first inventoryItem to get started"}
             </p>
           </div>
         ) : (
@@ -428,7 +428,7 @@ export default function ListDrug() {
                       </span>
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Drug Name
+                      InventoryItem Name
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                       Last Purchase Date
@@ -442,41 +442,41 @@ export default function ListDrug() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedDrugs.map((drug, index) => (
+                  {paginatedInventoryItems.map((inventoryItem, index) => (
                     <tr
-                      key={drug.id}
+                      key={inventoryItem.id}
                       className="border-b border-gray-200 hover:bg-gray-50 transition duration-150"
                     >
                       <td className="px-6 py-4 text-sm text-gray-700 font-medium">
                         {startIndex + index + 1}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-800 font-medium">
-                        {drug.name}
+                        {inventoryItem.name}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {formatDate(drug.lastAddedDate)}
+                        {formatDate(inventoryItem.lastAddedDate)}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {drug.presentQuantity ?? 0}
+                        {inventoryItem.presentQuantity ?? 0}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => openViewModal(drug.id)}
+                            onClick={() => openViewModal(inventoryItem.id)}
                             className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition duration-150"
                             title="View"
                           >
                             <Eye size={16} />
                           </button>
                           <button
-                            onClick={() => openAdjustModal(drug)}
+                            onClick={() => openAdjustModal(inventoryItem)}
                             className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition duration-150"
                             title="Adjust Quantity"
                           >
                             <SlidersHorizontal size={16} />
                           </button>
                           <button
-                            onClick={() => openEditModal(drug)}
+                            onClick={() => openEditModal(inventoryItem)}
                             className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition duration-150"
                             title="Edit"
                           >
@@ -491,35 +491,35 @@ export default function ListDrug() {
             </div>
 
             <div className="md:hidden space-y-4">
-              {paginatedDrugs.map((drug) => (
+              {paginatedInventoryItems.map((inventoryItem) => (
                 <div
-                  key={drug.id}
+                  key={inventoryItem.id}
                   className="bg-gray-50 rounded-2xl border border-gray-200 p-5 space-y-3"
                 >
-                  <h3 className="font-semibold text-gray-800">{drug.name}</h3>
+                  <h3 className="font-semibold text-gray-800">{inventoryItem.name}</h3>
                   <p className="text-sm text-gray-600">
-                    Last Added Date: {formatDate(drug.lastAddedDate)}
+                    Last Added Date: {formatDate(inventoryItem.lastAddedDate)}
                   </p>
                   <p className="text-sm text-gray-600">
-                    Present Quantity: {drug.presentQuantity ?? 0}
+                    Present Quantity: {inventoryItem.presentQuantity ?? 0}
                   </p>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => openViewModal(drug.id)}
+                      onClick={() => openViewModal(inventoryItem.id)}
                       className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition duration-150"
                       title="View"
                     >
                       <Eye size={16} />
                     </button>
                     <button
-                      onClick={() => openAdjustModal(drug)}
+                      onClick={() => openAdjustModal(inventoryItem)}
                       className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition duration-150"
                       title="Adjust Quantity"
                     >
                       <SlidersHorizontal size={16} />
                     </button>
                     <button
-                      onClick={() => openEditModal(drug)}
+                      onClick={() => openEditModal(inventoryItem)}
                       className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition duration-150"
                       title="Edit"
                     >
@@ -532,9 +532,9 @@ export default function ListDrug() {
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6 pt-4 border-t border-gray-200">
               <div className="text-xs md:text-sm text-gray-600">
-                Showing {drugs.length > 0 ? startIndex + 1 : 0} to{" "}
-                {startIndex + drugs.length} of drugs
-                {/* {displayedTotal} drugs */}
+                Showing {inventoryItems.length > 0 ? startIndex + 1 : 0} to{" "}
+                {startIndex + inventoryItems.length} of inventoryItems
+                {/* {displayedTotal} inventoryItems */}
               </div>
 
               <div className="flex items-center gap-1 md:gap-2">
@@ -567,10 +567,10 @@ export default function ListDrug() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-800">
                 {isViewOpen
-                  ? "Drug Details"
+                  ? "InventoryItem Details"
                   : isAdjustOpen
-                    ? "Adjust Drug Quantity"
-                    : "Edit Drug Name"}
+                    ? "Adjust InventoryItem Quantity"
+                    : "Edit InventoryItem Name"}
               </h2>
               <button
                 onClick={closeAllModals}
@@ -581,19 +581,19 @@ export default function ListDrug() {
             </div>
 
             <div className="p-6">
-              {isViewOpen && selectedDrug && (
+              {isViewOpen && selectedInventoryItem && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="rounded-xl border border-gray-200 p-4">
-                      <p className="text-sm text-gray-500">Drug Name</p>
+                      <p className="text-sm text-gray-500">InventoryItem Name</p>
                       <p className="text-lg font-semibold text-gray-800 mt-1">
-                        {selectedDrug.name}
+                        {selectedInventoryItem.name}
                       </p>
                     </div>
                     <div className="rounded-xl border border-gray-200 p-4">
                       <p className="text-sm text-gray-500">Added On</p>
                       <p className="text-lg font-semibold text-gray-800 mt-1">
-                        {formatDate(selectedDrug.addedOn)}
+                        {formatDate(selectedInventoryItem.addedOn)}
                       </p>
                     </div>
                     <div className="rounded-xl border border-gray-200 p-4">
@@ -601,34 +601,34 @@ export default function ListDrug() {
                         Last Purchase Date
                       </p>
                       <p className="text-lg font-semibold text-gray-800 mt-1">
-                        {formatDate(selectedDrug.lastAddedDate)}
+                        {formatDate(selectedInventoryItem.lastAddedDate)}
                       </p>
                     </div>
                     <div className="rounded-xl border border-gray-200 p-4">
                       <p className="text-sm text-gray-500">Present Quantity</p>
                       <p className="text-lg font-semibold text-gray-800 mt-1">
-                        {selectedDrug.presentQuantity ?? 0}
+                        {selectedInventoryItem.presentQuantity ?? 0}
                       </p>
                     </div>
                     <div className="rounded-xl border border-gray-200 p-4">
                       <p className="text-sm text-gray-500">Latest Price</p>
                       <p className="text-lg font-semibold text-gray-800 mt-1">
-                        {formatCurrency(selectedDrug.latestPrice)}
+                        {formatCurrency(selectedInventoryItem.latestPrice)}
                       </p>
                     </div>
                     <div className="rounded-xl border border-gray-200 p-4">
                       <p className="text-sm text-gray-500">Total Bill</p>
                       <p className="text-lg font-semibold text-gray-800 mt-1">
-                        {formatCurrency(selectedDrug.totalBill)}
+                        {formatCurrency(selectedInventoryItem.totalBill)}
                       </p>
                     </div>
                   </div>
 
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                      Drug History
+                      InventoryItem History
                     </h3>
-                    {selectedDrug.history?.length ? (
+                    {selectedInventoryItem.history?.length ? (
                       <div className="overflow-x-auto border border-gray-200 rounded-xl">
                         <table className="w-full">
                           <thead className="bg-gray-50">
@@ -666,7 +666,7 @@ export default function ListDrug() {
                             </tr>
                           </thead>
                           <tbody>
-                            {selectedDrug.history.map((entry) => (
+                            {selectedInventoryItem.history.map((entry) => (
                               <tr
                                 key={entry.id}
                                 className="border-t border-gray-100"
@@ -725,11 +725,11 @@ export default function ListDrug() {
                 </div>
               )}
 
-              {isAdjustOpen && selectedDrug && (
+              {isAdjustOpen && selectedInventoryItem && (
                 <form onSubmit={handleAdjustEntry} className="space-y-5">
                   <p className="text-sm text-gray-600">
                     Adjust stock for{" "}
-                    <span className="font-semibold">{selectedDrug.name}</span>
+                    <span className="font-semibold">{selectedInventoryItem.name}</span>
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -910,22 +910,22 @@ export default function ListDrug() {
                 </form>
               )}
 
-              {isEditOpen && selectedDrug && (
-                <form onSubmit={handleRenameDrug} className="space-y-5">
+              {isEditOpen && selectedInventoryItem && (
+                <form onSubmit={handleRenameInventoryItem} className="space-y-5">
                   <p className="text-sm text-gray-600">
-                    Update drug name for{" "}
-                    <span className="font-semibold">{selectedDrug.name}</span>
+                    Update inventoryItem name for{" "}
+                    <span className="font-semibold">{selectedInventoryItem.name}</span>
                   </p>
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Drug Name
+                      InventoryItem Name
                     </label>
                     <input
                       type="text"
                       value={editName}
                       onChange={(event) => setEditName(event.target.value)}
-                      placeholder="Enter new drug name"
+                      placeholder="Enter new inventoryItem name"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                     />
                   </div>
@@ -933,11 +933,11 @@ export default function ListDrug() {
                   <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
                     <button
                       type="button"
-                      onClick={handleDeleteDrug}
+                      onClick={handleDeleteInventoryItem}
                       disabled={modalLoading}
                       className="inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold py-2.5 px-5 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
                     >
-                      {modalLoading ? "Deleting..." : "Delete Drug"}
+                      {modalLoading ? "Deleting..." : "Delete InventoryItem"}
                     </button>
 
                     <button

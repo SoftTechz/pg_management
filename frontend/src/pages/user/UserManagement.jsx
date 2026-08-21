@@ -36,6 +36,8 @@ const InputField = ({
         value={formData[field]}
         onChange={(e) => handleInputChange(field, e.target.value)}
         placeholder={placeholder}
+        maxLength={maxLength}
+        inputMode="numeric"
         className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-center text-lg font-mono tracking-wider ${
           errors[field]
             ? "border-red-300 focus:border-red-500"
@@ -171,7 +173,7 @@ export default function UserManagement() {
             {/* Left Image */}
             <div className="flex justify-right lg:justify-center">
               <img
-                src="/293.jpg"
+                src="/user_management.png"
                 alt="User Management"
                 className="w-full max-w-sm"
               />

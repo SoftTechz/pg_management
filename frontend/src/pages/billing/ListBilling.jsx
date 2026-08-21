@@ -10,14 +10,14 @@ import {
   FileText,
   Users,
 } from "lucide-react";
-import { getAllBilling } from "@/services/billing_service";
+import { getAllPayments } from "@/services/payments_service";
 import { getDashboardStats } from "@/services/dashboard_service";
 import ModuleHeader from "@/components/ui/ModuleHeader";
 
-export default function ListBilling() {
+export default function ListPayments() {
   const navigate = useNavigate();
 
-  const [billings, setBillings] = useState([]);
+  const [paymentss, setPaymentss] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeSearchTerm, setActiveSearchTerm] = useState("");
@@ -25,10 +25,10 @@ export default function ListBilling() {
   const [cursorHistory, setCursorHistory] = useState([]);
   const [nextCursor, setNextCursor] = useState(null);
   const [hasNext, setHasNext] = useState(false);
-  // const [totalBilling, setTotalBilling] = useState(0);
+  // const [totalPayments, setTotalPayments] = useState(0);
 
   const [showBillModal, setShowBillModal] = useState(false);
-  const [selectedBilling, setSelectedBilling] = useState(null);
+  const [selectedPayments, setSelectedPayments] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
 
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -36,7 +36,7 @@ export default function ListBilling() {
 
   const requestIdRef = useRef(0);
 
-  const billingsPerPage = 5;
+  const paymentssPerPage = 5;
   const hasPrev = cursorHistory.length > 0;
 
   useEffect(() => {
@@ -70,13 +70,13 @@ export default function ListBilling() {
         const requestId = ++requestIdRef.current;
 
         const params = {
-          limit: billingsPerPage,
+          limit: paymentssPerPage,
           cursor: activeCursor,
           search: activeSearch ? activeSearchTerm : undefined,
         };
 
         const [response, statsResponse] = await Promise.all([
-          getAllBilling(params),
+          getAllPayments(params),
           // getDashboardStats(),
         ]);
 
@@ -84,13 +84,13 @@ export default function ListBilling() {
           return;
         }
 
-        setBillings(response.billings || []);
+        setPaymentss(response.paymentss || []);
         setNextCursor(response.next_cursor || null);
         setHasNext(Boolean(response.has_next));
-        // setTotalBilling(statsResponse?.data?.total_billing || 0);
+        // setTotalPayments(statsResponse?.data?.total_payments || 0);
       } catch (err) {
-        console.error("Error fetching billing list:", err);
-        setError("Failed to load billing list. Please try again.");
+        console.error("Error fetching payments list:", err);
+        setError("Failed to load payments list. Please try again.");
       } finally {
         if (requestIdRef.current) {
           setLoading(false);
@@ -117,29 +117,29 @@ export default function ListBilling() {
     }
   };
 
-  const startIndex = cursorHistory.length * billingsPerPage;
+  const startIndex = cursorHistory.length * paymentssPerPage;
 
-  const handleEditClick = (billingId) => {
-    navigate(`/billing/${billingId}`);
+  const handleEditClick = (paymentsId) => {
+    navigate(`/payments/${paymentsId}`);
   };
 
-  const handlePdfClick = (billing) => {
-    if (!billing) return;
-    setSelectedBilling(billing);
+  const handlePdfClick = (payments) => {
+    if (!payments) return;
+    setSelectedPayments(payments);
     setModalLoading(true);
     setShowBillModal(true);
   };
 
   const closeBillModal = () => {
     setShowBillModal(false);
-    setSelectedBilling(null);
+    setSelectedPayments(null);
     setModalLoading(false);
   };
 
   const handlePrintBill = () => {
-    if (!selectedBilling || !selectedBilling.id) return;
+    if (!selectedPayments || !selectedPayments.id) return;
     window.open(
-      `/bill.html?billing_id=${selectedBilling.id}&print=1&api_base=/api/v1`,
+      `/bill.html?payments_id=${selectedPayments.id}&print=1&api_base=/api/v1`,
       "_blank",
       "noopener",
     );
@@ -150,15 +150,15 @@ export default function ListBilling() {
       <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 relative">
         <ModuleHeader
           icon={<FileText size={22} />}
-          title="Billing Management"
-          tagline="Manage billing records"
+          title="Payments Management"
+          tagline="Manage payments records"
           action={
             <button
-              onClick={() => navigate("/billing/add")}
+              onClick={() => navigate("/payments/add")}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-sm md:text-base font-semibold py-2 md:py-2.5 px-3 md:px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
             >
               <Plus size={18} />
-              Add Billing
+              Add Payments
             </button>
           }
         />
@@ -166,7 +166,7 @@ export default function ListBilling() {
         {/* <div className="mb-4">
           <p className="inline-flex items-center gap-2 text-sm text-purple-800 font-bold uppercase tracking-wide">
             <Users size={16} />
-            Total Bills - {totalBilling}
+            Total Bills - {totalPayments}
           </p>
         </div> */}
 
@@ -174,7 +174,7 @@ export default function ListBilling() {
           <Search className="absolute left-3 top-3 text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Search by patient name"
+            placeholder="Search by room name"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -195,13 +195,13 @@ export default function ListBilling() {
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
           </div>
-        ) : !isInitialLoad && billings.length === 0 ? (
+        ) : !isInitialLoad && paymentss.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No billing records found</p>
+            <p className="text-gray-500 text-lg">No payments records found</p>
             <p className="text-gray-400 mt-2">
               {searchTerm
                 ? "Try adjusting your search"
-                : "Add your first billing record to get started"}
+                : "Add your first payments record to get started"}
             </p>
           </div>
         ) : (
@@ -214,13 +214,13 @@ export default function ListBilling() {
                       S.No
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Owner Name
+                      Room Name
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                       Phone Number
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Pet Name
+                      Tenant Name
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                       Date
@@ -234,44 +234,44 @@ export default function ListBilling() {
                   </tr>
                 </thead>
                 <tbody>
-                  {billings.map((billing, index) => (
+                  {paymentss.map((payments, index) => (
                     <tr
-                      key={billing.id}
+                      key={payments.id}
                       className="border-b border-gray-200 hover:bg-gray-50"
                     >
                       <td className="px-6 py-4 text-sm text-gray-700 font-medium">
                         {startIndex + index + 1}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-800 font-medium">
-                        {billing.patient_name || "-"}
+                        {payments.room_name || "-"}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {billing.phone_number || "-"}
+                        {payments.phone_number || "-"}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {billing.pet_name || "-"}
+                        {payments.pet_name || "-"}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {billing.date || "-"}
+                        {payments.date || "-"}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {billing.total_amount
-                          ? `₹${billing.total_amount.toFixed(2)}`
+                        {payments.total_amount
+                          ? `₹${payments.total_amount.toFixed(2)}`
                           : "-"}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => handlePdfClick(billing)}
+                            onClick={() => handlePdfClick(payments)}
                             className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
                             title="Download PDF"
                           >
                             <FileText size={16} />
                           </button>
                           <button
-                            onClick={() => handleEditClick(billing.id)}
+                            onClick={() => handleEditClick(payments.id)}
                             className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200"
-                            title="Edit Billing"
+                            title="Edit Payments"
                           >
                             <Pencil size={16} />
                           </button>
@@ -284,29 +284,29 @@ export default function ListBilling() {
             </div>
 
             <div className="md:hidden space-y-4">
-              {billings.map((billing) => (
+              {paymentss.map((payments) => (
                 <div
-                  key={billing.id}
+                  key={payments.id}
                   className="bg-gray-50 rounded-2xl border border-gray-200 p-5"
                 >
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-semibold text-gray-800">
-                        {billing.patient_name || "-"}
+                        {payments.room_name || "-"}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {billing.pet_name || "-"}
+                        {payments.pet_name || "-"}
                       </p>
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handlePdfClick(billing)}
+                        onClick={() => handlePdfClick(payments)}
                         className="p-2 bg-gray-100 rounded-lg"
                       >
                         <FileText size={16} />
                       </button>
                       <button
-                        onClick={() => handleEditClick(billing.id)}
+                        onClick={() => handleEditClick(payments.id)}
                         className="p-2 bg-purple-100 text-purple-600 rounded-lg"
                       >
                         <Pencil size={16} />
@@ -314,10 +314,10 @@ export default function ListBilling() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Phone: {billing.phone_number || "-"}
+                    Phone: {payments.phone_number || "-"}
                   </p>
                   <p className="text-sm text-gray-600">
-                    Date: {billing.date || "-"}
+                    Date: {payments.date || "-"}
                   </p>
                 </div>
               ))}
@@ -325,9 +325,9 @@ export default function ListBilling() {
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6 pt-4 border-t border-gray-200">
               <div className="text-xs md:text-sm text-gray-600">
-                Showing {billings.length > 0 ? startIndex + 1 : 0} to{" "}
-                {startIndex + billings.length} of bills
-                {/* {totalBilling} bills */}
+                Showing {paymentss.length > 0 ? startIndex + 1 : 0} to{" "}
+                {startIndex + paymentss.length} of bills
+                {/* {totalPayments} bills */}
               </div>
               <div className="flex items-center gap-1 md:gap-2">
                 <button
@@ -339,8 +339,8 @@ export default function ListBilling() {
                   Previous
                 </button>
                 <span className="text-xs md:text-sm text-gray-600 px-2">
-                  {startIndex + 1} to {startIndex + billings.length} of{" "}
-                  {/* {totalBilling} */}
+                  {startIndex + 1} to {startIndex + paymentss.length} of{" "}
+                  {/* {totalPayments} */}
                 </span>
                 <button
                   onClick={handleNextPage}
@@ -353,11 +353,11 @@ export default function ListBilling() {
               </div>
             </div>
 
-            {showBillModal && selectedBilling && (
+            {showBillModal && selectedPayments && (
               <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
                 <div className="bg-white rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
                   <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                    <h2 className="text-lg font-bold">Billing Preview</h2>
+                    <h2 className="text-lg font-bold">Payments Preview</h2>
                     <button
                       onClick={closeBillModal}
                       className="text-gray-500 hover:text-gray-700"
@@ -373,8 +373,8 @@ export default function ListBilling() {
                       </div>
                     )}
                     <iframe
-                      src={`/bill.html?billing_id=${selectedBilling.id}&api_base=/api/v1`}
-                      title="Billing Preview"
+                      src={`/bill.html?payments_id=${selectedPayments.id}&api_base=/api/v1`}
+                      title="Payments Preview"
                       className="w-full h-[75vh] border rounded-lg"
                       onLoad={() => setModalLoading(false)}
                     />

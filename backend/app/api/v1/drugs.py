@@ -5,17 +5,17 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.firebase import get_firestore
-from app.schemas.drug import (
-    DrugCreate,
-    DrugEntryCreate,
-    DrugQuantityAdjustmentCreate,
-    DrugNameUpdate,
-    DrugTemplateCreate,
+from app.schemas.inventoryItem import (
+    InventoryItemCreate,
+    InventoryItemEntryCreate,
+    InventoryItemQuantityAdjustmentCreate,
+    InventoryItemNameUpdate,
+    InventoryItemTemplateCreate,
 )
 from app.services.dashboard_stats_service import (
-    decrement_drugs,
+    decrement_inventoryItems,
     get_dashboard_stats,
-    increment_drugs,
+    increment_inventoryItems,
 )
 
 router = APIRouter()
@@ -94,8 +94,8 @@ def _build_adjustment_entry(
     }
 
 
-def _recalculate_drug_fields(drug_data: dict[str, Any]) -> dict[str, Any]:
-    history = drug_data.get("history") or []
+def _recalculate_inventoryItem_fields(inventoryItem_data: dict[str, Any]) -> dict[str, Any]:
+    history = inventoryItem_data.get("history") or []
     present_quantity = sum(
         _normalize_number(entry.get("quantity")) for entry in history
     )
@@ -113,7 +113,7 @@ def _recalculate_drug_fields(drug_data: dict[str, Any]) -> dict[str, Any]:
     oldest_purchase_entry = purchase_entries[-1] if purchase_entries else None
 
     return {
-        **drug_data,
+        **inventoryItem_data,
         "presentQuantity": present_quantity,
         "totalBill": total_bill,
         "latestPrice": (
@@ -127,24 +127,24 @@ def _recalculate_drug_fields(drug_data: dict[str, Any]) -> dict[str, Any]:
         "addedOn": (
             oldest_purchase_entry.get("date")
             if oldest_purchase_entry
-            else drug_data.get("addedOn")
+            else inventoryItem_data.get("addedOn")
         ),
     }
 
 
 @router.post("/")
-def create_drug(payload: DrugCreate):
+def create_inventoryItem(payload: InventoryItemCreate):
     try:
         db = get_firestore()
-        drugs_ref = db.collection("drugs")
+        inventoryItems_ref = db.collection("inventoryItems")
 
         name = payload.name.strip()
-        existing = list(drugs_ref.where("name", "==", name).stream())
+        existing = list(inventoryItems_ref.where("name", "==", name).stream())
         if existing:
-            raise HTTPException(status_code=400, detail="Drug name already exists")
+            raise HTTPException(status_code=400, detail="InventoryItem name already exists")
 
         now = datetime.now(timezone.utc)
-        doc_ref = drugs_ref.document()
+        doc_ref = inventoryItems_ref.document()
 
         entry = _build_history_entry(
             payload.date,
@@ -167,9 +167,9 @@ def create_drug(payload: DrugCreate):
                 "updated_at": None,
             }
         )
-        increment_drugs()
+        increment_inventoryItems()
 
-        return {"success": True, "drug_id": doc_ref.id, "id": doc_ref.id}
+        return {"success": True, "inventoryItem_id": doc_ref.id, "id": doc_ref.id}
     except HTTPException:
         raise
     except Exception as error:
@@ -177,24 +177,24 @@ def create_drug(payload: DrugCreate):
 
 
 @router.get("/")
-def get_all_drugs(
+def get_all_inventoryItems(
     limit: int = Query(10, ge=1, le=100),
     cursor: str | None = Query(None),
     search: str | None = Query(None),
 ):
     db = get_firestore()
-    drugs_ref = db.collection("drugs")
+    inventoryItems_ref = db.collection("inventoryItems")
 
     term = normalize_name(search) if search else None
     if term:
         query = (
-            drugs_ref.order_by("name_lower").start_at([term]).end_at([f"{term}\uf8ff"])
+            inventoryItems_ref.order_by("name_lower").start_at([term]).end_at([f"{term}\uf8ff"])
         )
     else:
-        query = drugs_ref.order_by("created_at", direction="DESCENDING")
+        query = inventoryItems_ref.order_by("created_at", direction="DESCENDING")
 
     if cursor:
-        cursor_doc = drugs_ref.document(cursor).get()
+        cursor_doc = inventoryItems_ref.document(cursor).get()
         if cursor_doc.exists:
             query = query.start_after(cursor_doc)
 
@@ -204,19 +204,19 @@ def get_all_drugs(
     has_next = len(docs) > limit
     selected_docs = docs[:limit] if has_next else docs
 
-    drugs = []
+    inventoryItems = []
     for doc in selected_docs:
-        drug_data = doc.to_dict() or {}
-        drug_data["id"] = doc.id
-        drugs.append(drug_data)
+        inventoryItem_data = doc.to_dict() or {}
+        inventoryItem_data["id"] = doc.id
+        inventoryItems.append(inventoryItem_data)
 
     next_cursor = selected_docs[-1].id if has_next and selected_docs else None
 
     # stats = get_dashboard_stats()
-    # total = int(stats.get("total_drugs", 0) or 0)
+    # total = int(stats.get("total_inventoryItems", 0) or 0)
 
     return {
-        "drugs": drugs,
+        "inventoryItems": inventoryItems,
         "limit": limit,
         "next_cursor": next_cursor,
         "has_next": has_next,
@@ -225,7 +225,7 @@ def get_all_drugs(
 
 
 # @router.get("/")
-# def get_all_drugs(
+# def get_all_inventoryItems(
 #     limit: int = Query(10, ge=1, le=100),
 #     cursor: str | None = Query(None),
 #     search: str | None = Query(None),
@@ -234,44 +234,44 @@ def get_all_drugs(
 #
 #     t0 = time.time()
 #     db = get_firestore()
-#     drugs_ref = db.collection("drugs")
-#     print(f"[TIME] Drugs DB init: {time.time() - t0:.4f}s")
+#     inventoryItems_ref = db.collection("inventoryItems")
+#     print(f"[TIME] InventoryItems DB init: {time.time() - t0:.4f}s")
 #
 #     t1 = time.time()
 #     term = normalize_name(search) if search else None
 #     if term:
 #         query = (
-#             drugs_ref.order_by("name_lower").start_at([term]).end_at([f"{term}\uf8ff"])
+#             inventoryItems_ref.order_by("name_lower").start_at([term]).end_at([f"{term}\uf8ff"])
 #         )
 #         count_query = query
 #     else:
-#         query = drugs_ref.order_by("created_at", direction="DESCENDING")
-#         count_query = drugs_ref
-#     print(f"[TIME] Drugs query build: {time.time() - t1:.4f}s")
+#         query = inventoryItems_ref.order_by("created_at", direction="DESCENDING")
+#         count_query = inventoryItems_ref
+#     print(f"[TIME] InventoryItems query build: {time.time() - t1:.4f}s")
 #
 #     t2 = time.time()
 #     if cursor:
-#         cursor_doc = drugs_ref.document(cursor).get()
+#         cursor_doc = inventoryItems_ref.document(cursor).get()
 #         if cursor_doc.exists:
 #             query = query.start_after(cursor_doc)
-#     print(f"[TIME] Drugs cursor handling: {time.time() - t2:.4f}s")
+#     print(f"[TIME] InventoryItems cursor handling: {time.time() - t2:.4f}s")
 #
 #     query = query.limit(limit + 1)
 #
 #     t3 = time.time()
 #     docs = list(query.stream())
-#     print(f"[TIME] Drugs DB fetch (stream): {time.time() - t3:.4f}s")
+#     print(f"[TIME] InventoryItems DB fetch (stream): {time.time() - t3:.4f}s")
 #
 #     has_next = len(docs) > limit
 #     selected_docs = docs[:limit] if has_next else docs
 #
 #     t4 = time.time()
-#     drugs = []
+#     inventoryItems = []
 #     for doc in selected_docs:
-#         drug_data = doc.to_dict() or {}
-#         drug_data["id"] = doc.id
-#         drugs.append(drug_data)
-#     print(f"[TIME] Drugs normalize: {time.time() - t4:.4f}s")
+#         inventoryItem_data = doc.to_dict() or {}
+#         inventoryItem_data["id"] = doc.id
+#         inventoryItems.append(inventoryItem_data)
+#     print(f"[TIME] InventoryItems normalize: {time.time() - t4:.4f}s")
 #
 #     next_cursor = selected_docs[-1].id if has_next and selected_docs else None
 #
@@ -284,12 +284,12 @@ def get_all_drugs(
 #             total = int(count_snapshot[0].value)
 #     except Exception:
 #         total = sum(1 for _ in count_query.stream())
-#     print(f"[TIME] Drugs count query: {time.time() - t5:.4f}s")
+#     print(f"[TIME] InventoryItems count query: {time.time() - t5:.4f}s")
 #
-#     print(f"[TIME] Drugs TOTAL API: {time.time() - start_total:.4f}s")
+#     print(f"[TIME] InventoryItems TOTAL API: {time.time() - start_total:.4f}s")
 #
 #     return {
-#         "drugs": drugs,
+#         "inventoryItems": inventoryItems,
 #         "limit": limit,
 #         "next_cursor": next_cursor,
 #         "has_next": has_next,
@@ -298,69 +298,69 @@ def get_all_drugs(
 
 
 @router.get("/name-quantity")
-def get_drug_name_and_quantity(
+def get_inventoryItem_name_and_quantity(
     search: str | None = Query(None),
     limit: int = Query(100, ge=1, le=1000),
 ):
     db = get_firestore()
-    drugs_ref = db.collection("drugs")
+    inventoryItems_ref = db.collection("inventoryItems")
 
     term = normalize_name(search) if search else None
 
     if term:
         query = (
-            drugs_ref.order_by("name_lower").start_at([term]).end_at([f"{term}\uf8ff"])
+            inventoryItems_ref.order_by("name_lower").start_at([term]).end_at([f"{term}\uf8ff"])
         )
     else:
-        query = drugs_ref.order_by("created_at", direction="DESCENDING")
+        query = inventoryItems_ref.order_by("created_at", direction="DESCENDING")
 
     query = query.limit(limit)
     docs = list(query.stream())
 
-    drugs = []
+    inventoryItems = []
     for doc in docs:
-        drug_data = doc.to_dict() or {}
-        drugs.append(
+        inventoryItem_data = doc.to_dict() or {}
+        inventoryItems.append(
             {
                 "id": doc.id,
-                "name": drug_data.get("name", ""),
-                "presentQuantity": drug_data.get("presentQuantity", 0),
+                "name": inventoryItem_data.get("name", ""),
+                "presentQuantity": inventoryItem_data.get("presentQuantity", 0),
             }
         )
 
-    return {"drugs": drugs}
+    return {"inventoryItems": inventoryItems}
 
 
-@router.get("/{drug_id}")
-def get_drug_by_id(drug_id: str):
+@router.get("/{inventoryItem_id}")
+def get_inventoryItem_by_id(inventoryItem_id: str):
     db = get_firestore()
-    doc_ref = db.collection("drugs").document(drug_id)
+    doc_ref = db.collection("inventoryItems").document(inventoryItem_id)
     doc = doc_ref.get()
 
     if not doc.exists:
-        raise HTTPException(status_code=404, detail="Drug not found")
+        raise HTTPException(status_code=404, detail="InventoryItem not found")
 
-    drug_data = doc.to_dict() or {}
-    drug_data["id"] = doc.id
-    return {"drug": drug_data}
+    inventoryItem_data = doc.to_dict() or {}
+    inventoryItem_data["id"] = doc.id
+    return {"inventoryItem": inventoryItem_data}
 
 
-@router.put("/{drug_id}/name")
-def update_drug_name(drug_id: str, payload: DrugNameUpdate):
+@router.put("/{inventoryItem_id}/name")
+def update_inventoryItem_name(inventoryItem_id: str, payload: InventoryItemNameUpdate):
     db = get_firestore()
-    drugs_ref = db.collection("drugs")
-    doc_ref = drugs_ref.document(drug_id)
+    inventoryItems_ref = db.collection("inventoryItems")
+    doc_ref = inventoryItems_ref.document(inventoryItem_id)
     doc = doc_ref.get()
 
     if not doc.exists:
-        raise HTTPException(status_code=404, detail="Drug not found")
+        raise HTTPException(status_code=404, detail="InventoryItem not found")
 
     name = payload.name.strip()
     if not name:
-        raise HTTPException(status_code=422, detail="Drug name is required")
-    existing = list(drugs_ref.where("name", "==", name).stream())
-    if any(match.id != drug_id for match in existing):
-        raise HTTPException(status_code=400, detail="Drug name already exists")
+        raise HTTPException(status_code=422, detail="InventoryItem name is required")
+    existing = list(inventoryItems_ref.where("name", "==", name).stream())
+    if any(match.id != inventoryItem_id for match in existing):
+        raise HTTPException(status_code=400, detail="InventoryItem name already exists")
 
     doc_ref.update(
         {
@@ -372,14 +372,14 @@ def update_drug_name(drug_id: str, payload: DrugNameUpdate):
     return {"success": True}
 
 
-@router.post("/{drug_id}/entries")
-def add_drug_entry(drug_id: str, payload: DrugEntryCreate):
+@router.post("/{inventoryItem_id}/entries")
+def add_inventoryItem_entry(inventoryItem_id: str, payload: InventoryItemEntryCreate):
     db = get_firestore()
-    doc_ref = db.collection("drugs").document(drug_id)
+    doc_ref = db.collection("inventoryItems").document(inventoryItem_id)
     doc = doc_ref.get()
 
     if not doc.exists:
-        raise HTTPException(status_code=404, detail="Drug not found")
+        raise HTTPException(status_code=404, detail="InventoryItem not found")
 
     current = doc.to_dict() or {}
     history = current.get("history") or []
@@ -391,7 +391,7 @@ def add_drug_entry(drug_id: str, payload: DrugEntryCreate):
     )
     updated_history = [entry, *history]
 
-    updated = _recalculate_drug_fields({**current, "history": updated_history})
+    updated = _recalculate_inventoryItem_fields({**current, "history": updated_history})
     updated["updated_at"] = datetime.now(timezone.utc)
 
     doc_ref.update(
@@ -408,14 +408,14 @@ def add_drug_entry(drug_id: str, payload: DrugEntryCreate):
     return {"success": True}
 
 
-@router.post("/{drug_id}/adjustments")
-def adjust_drug_quantity(drug_id: str, payload: DrugQuantityAdjustmentCreate):
+@router.post("/{inventoryItem_id}/adjustments")
+def adjust_inventoryItem_quantity(inventoryItem_id: str, payload: InventoryItemQuantityAdjustmentCreate):
     db = get_firestore()
-    doc_ref = db.collection("drugs").document(drug_id)
+    doc_ref = db.collection("inventoryItems").document(inventoryItem_id)
     doc = doc_ref.get()
 
     if not doc.exists:
-        raise HTTPException(status_code=404, detail="Drug not found")
+        raise HTTPException(status_code=404, detail="InventoryItem not found")
 
     current = doc.to_dict() or {}
     history = current.get("history") or []
@@ -444,7 +444,7 @@ def adjust_drug_quantity(drug_id: str, payload: DrugQuantityAdjustmentCreate):
     )
 
     updated_history = [entry, *history]
-    updated = _recalculate_drug_fields({**current, "history": updated_history})
+    updated = _recalculate_inventoryItem_fields({**current, "history": updated_history})
     updated["updated_at"] = datetime.now(timezone.utc)
 
     doc_ref.update(
@@ -461,14 +461,14 @@ def adjust_drug_quantity(drug_id: str, payload: DrugQuantityAdjustmentCreate):
     return {"success": True}
 
 
-@router.delete("/{drug_id}/entries/{entry_id}")
-def delete_drug_entry(drug_id: str, entry_id: str):
+@router.delete("/{inventoryItem_id}/entries/{entry_id}")
+def delete_inventoryItem_entry(inventoryItem_id: str, entry_id: str):
     db = get_firestore()
-    doc_ref = db.collection("drugs").document(drug_id)
+    doc_ref = db.collection("inventoryItems").document(inventoryItem_id)
     doc = doc_ref.get()
 
     if not doc.exists:
-        raise HTTPException(status_code=404, detail="Drug not found")
+        raise HTTPException(status_code=404, detail="InventoryItem not found")
 
     current = doc.to_dict() or {}
     history = current.get("history") or []
@@ -476,7 +476,7 @@ def delete_drug_entry(drug_id: str, entry_id: str):
     if len(updated_history) == len(history):
         raise HTTPException(status_code=404, detail="History entry not found")
 
-    updated = _recalculate_drug_fields({**current, "history": updated_history})
+    updated = _recalculate_inventoryItem_fields({**current, "history": updated_history})
     updated["updated_at"] = datetime.now(timezone.utc)
 
     doc_ref.update(
@@ -493,25 +493,25 @@ def delete_drug_entry(drug_id: str, entry_id: str):
     return {"success": True}
 
 
-@router.delete("/{drug_id}")
-def delete_drug(drug_id: str):
+@router.delete("/{inventoryItem_id}")
+def delete_inventoryItem(inventoryItem_id: str):
     db = get_firestore()
-    doc_ref = db.collection("drugs").document(drug_id)
+    doc_ref = db.collection("inventoryItems").document(inventoryItem_id)
     doc = doc_ref.get()
 
     if not doc.exists:
-        raise HTTPException(status_code=404, detail="Drug not found")
+        raise HTTPException(status_code=404, detail="InventoryItem not found")
 
     doc_ref.delete()
-    decrement_drugs()
+    decrement_inventoryItems()
     return {"success": True}
 
 
 @router.post("/manage/templates")
-def create_drug_template(payload: DrugTemplateCreate):
+def create_inventoryItem_template(payload: InventoryItemTemplateCreate):
     try:
         db = get_firestore()
-        templates_ref = db.collection("drug_templates")
+        templates_ref = db.collection("inventoryItem_templates")
         name = payload.templateName.strip()
         if not name:
             raise HTTPException(status_code=422, detail="Template name is required")
@@ -541,10 +541,10 @@ def create_drug_template(payload: DrugTemplateCreate):
 
 
 @router.get("/manage/templates")
-def get_all_drug_templates():
+def get_all_inventoryItem_templates():
     db = get_firestore()
     docs = (
-        db.collection("drug_templates")
+        db.collection("inventoryItem_templates")
         .select(["templateName", "medicines", "created_at"])
         .order_by("created_at", direction="DESCENDING")
         .stream()
@@ -560,9 +560,9 @@ def get_all_drug_templates():
 
 
 @router.get("/manage/templates/{template_id}")
-def get_drug_template_by_id(template_id: str):
+def get_inventoryItem_template_by_id(template_id: str):
     db = get_firestore()
-    doc_ref = db.collection("drug_templates").document(template_id)
+    doc_ref = db.collection("inventoryItem_templates").document(template_id)
     doc = doc_ref.get()
     if not doc.exists:
         raise HTTPException(status_code=404, detail="Template not found")
@@ -572,9 +572,9 @@ def get_drug_template_by_id(template_id: str):
 
 
 @router.delete("/manage/templates/{template_id}")
-def delete_drug_template(template_id: str):
+def delete_inventoryItem_template(template_id: str):
     db = get_firestore()
-    doc_ref = db.collection("drug_templates").document(template_id)
+    doc_ref = db.collection("inventoryItem_templates").document(template_id)
     doc = doc_ref.get()
     if not doc.exists:
         raise HTTPException(status_code=404, detail="Template not found")

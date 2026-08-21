@@ -1,26 +1,31 @@
 import api from "@/config/axios";
 
-export const createBilling = async (payload) => {
-  const res = await api.post("/billing/", payload);
+export const createPayments = async (payload) => {
+  const res = await api.post("/payments/", payload);
   return res.data;
 };
 
-export const updateBilling = async (billingId, payload) => {
-  const res = await api.put(`/billing/${billingId}`, payload);
+export const createPayment = async (payload) => {
+  const res = await api.post("/payments/", payload);
   return res.data;
 };
 
-export const getAllBilling = async (params = {}) => {
-  const res = await api.get("/billing/", { params });
+export const updatePayments = async (paymentsId, payload) => {
+  const res = await api.put(`/payments/${paymentsId}`, payload);
   return res.data;
 };
 
-export const getBillingById = async (billingId) => {
-  const res = await api.get(`/billing/${billingId}`);
+export const getAllPayments = async (params = {}) => {
+  const res = await api.get("/payments/", { params });
   return res.data;
 };
 
-export const deleteBilling = async (billingId) => {
-  const res = await api.delete(`/billing/${billingId}`);
+export const getPaymentsById = async (paymentsId) => {
+  const res = await api.get(`/payments/${paymentsId}`);
+  return res.data;
+};
+
+export const deletePayments = async (paymentsId) => {
+  const res = await api.delete(`/payments/${paymentsId}`);
   return res.data;
 };

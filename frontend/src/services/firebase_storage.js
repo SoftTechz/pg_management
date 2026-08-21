@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 /**
  * Upload an image to Firebase Storage
  * @param {File|Blob} imageFile - The image file to upload
- * @param {string} folder - The folder path in storage (e.g., 'appointments', 'customers')
+ * @param {string} folder - The folder path in storage (e.g., 'allocations', 'rooms')
  * @param {string} fileName - Optional custom filename, if not provided, a timestamp will be used
  * @returns {Promise<string>} - The download URL of the uploaded image
  */

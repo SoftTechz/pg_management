@@ -3,21 +3,21 @@ import { useState, useEffect } from "react";
 import DashboardLayout from "../../app/layout/DashboardLayout";
 import { ArrowLeft, FileText, Plus, Trash2, Users } from "lucide-react";
 import ServiceItemInput from "@/components/ui/ServiceItemInput";
-import { getBillingById, updateBilling } from "@/services/billing_service";
-import { getDrugNameAndQuantity } from "@/services/drug_service";
+import { getPaymentsById, updatePayments } from "@/services/payments_service";
+import { getInventoryItemNameAndQuantity } from "@/services/inventoryItem_service";
 import toast from "react-hot-toast";
 import ModuleHeader from "@/components/ui/ModuleHeader";
 import SectionHeader from "@/components/ui/SectionHeader";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
-export default function UpdateBilling() {
-  const { billingId } = useParams();
+export default function UpdatePayments() {
+  const { paymentsId } = useParams();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    patient_name: "",
+    room_name: "",
     phone_number: "",
     pet_name: "",
     address: "",
@@ -32,7 +32,7 @@ export default function UpdateBilling() {
     ],
   });
   const [errors, setErrors] = useState({});
-  const [drugs, setDrugs] = useState([]);
+  const [inventoryItems, setInventoryItems] = useState([]);
 
   const calculateItemAmount = (quantity, rate) => {
     const q = Number(quantity) || 0;
@@ -48,21 +48,21 @@ export default function UpdateBilling() {
   };
 
   useEffect(() => {
-    if (!billingId) return;
+    if (!paymentsId) return;
 
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await getBillingById(billingId);
-        const billing = response.billing || {};
+        const response = await getPaymentsById(paymentsId);
+        const payments = response.payments || {};
 
         setFormData({
-          patient_name: billing.patient_name || "",
-          phone_number: billing.phone_number || "",
-          pet_name: billing.pet_name || "",
-          address: billing.address || "",
-          date: billing.date || new Date().toISOString().split("T")[0],
-          items: (billing.items || []).map((item) => ({
+          room_name: payments.room_name || "",
+          phone_number: payments.phone_number || "",
+          pet_name: payments.pet_name || "",
+          address: payments.address || "",
+          date: payments.date || new Date().toISOString().split("T")[0],
+          items: (payments.items || []).map((item) => ({
             service_or_item: item.service_or_item || "",
             quantity: item.quantity || 0,
             rate: item.rate || 0,
@@ -70,28 +70,28 @@ export default function UpdateBilling() {
           })),
         });
       } catch (err) {
-        console.error("Error fetching billing:", err);
-        toast.error("Failed to load billing details.");
+        console.error("Error fetching payments:", err);
+        toast.error("Failed to load payments details.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [billingId]);
+  }, [paymentsId]);
 
   useEffect(() => {
-    const fetchDrugs = async () => {
+    const fetchInventoryItems = async () => {
       try {
-        const res = await getDrugNameAndQuantity({ limit: 1000 });
-        setDrugs(res.drugs || []);
+        const res = await getInventoryItemNameAndQuantity({ limit: 1000 });
+        setInventoryItems(res.inventoryItems || []);
       } catch (err) {
-        console.error("Error loading drug list:", err);
-        toast.error("Unable to load drug list for item suggestions.");
+        console.error("Error loading inventoryItem list:", err);
+        toast.error("Unable to load inventoryItem list for item suggestions.");
       }
     };
 
-    fetchDrugs();
+    fetchInventoryItems();
   }, []);
 
   const handleChange = (e) => {
@@ -145,8 +145,8 @@ export default function UpdateBilling() {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.patient_name.trim()) {
-      newErrors.patient_name = "Patient name is required.";
+    if (!formData.room_name.trim()) {
+      newErrors.room_name = "Room name is required.";
     }
 
     if (!formData.date.trim()) {
@@ -174,7 +174,7 @@ export default function UpdateBilling() {
     try {
       setSaving(true);
       const payload = {
-        patient_name: formData.patient_name.trim(),
+        room_name: formData.room_name.trim(),
         phone_number: formData.phone_number.trim(),
         pet_name: formData.pet_name.trim(),
         address: formData.address.trim(),
@@ -188,12 +188,12 @@ export default function UpdateBilling() {
         total_amount: calculateTotalAmount(),
       };
 
-      await updateBilling(billingId, payload);
-      toast.success("Billing record updated successfully 🎉");
-      navigate("/billing");
+      await updatePayments(paymentsId, payload);
+      toast.success("Payments record updated successfully 🎉");
+      navigate("/payments");
     } catch (err) {
-      console.error("Error updating billing record:", err);
-      toast.error("Failed to update billing record. Please try again.");
+      console.error("Error updating payments record:", err);
+      toast.error("Failed to update payments record. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -206,17 +206,17 @@ export default function UpdateBilling() {
           <LoadingOverlay
             show={loading || saving}
             message={
-              saving ? "Updating billing record..." : "Loading billing data..."
+              saving ? "Updating payments record..." : "Loading payments data..."
             }
           />
           <ModuleHeader
             icon={<FileText size={22} />}
-            title="Update Billing"
-            tagline="Edit billing entry"
+            title="Update Payments"
+            tagline="Edit payments entry"
             action={
               <button
                 type="button"
-                onClick={() => navigate("/billing")}
+                onClick={() => navigate("/payments")}
                 disabled={loading || saving}
                 className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -229,24 +229,24 @@ export default function UpdateBilling() {
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="border-b border-gray-200 mb-3"></div>
             <div>
-              <SectionHeader title="Billing Info" icon={<Users size={18} />} />
+              <SectionHeader title="Payments Info" icon={<Users size={18} />} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Owner Name <span className="text-red-500">*</span>
+                    Room Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    name="patient_name"
-                    value={formData.patient_name}
+                    name="room_name"
+                    value={formData.room_name}
                     onChange={handleChange}
-                    placeholder="Enter owner name"
+                    placeholder="Enter room name"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                     required
                   />
-                  {errors.patient_name && (
+                  {errors.room_name && (
                     <p className="text-red-500 text-sm mt-1">
-                      {errors.patient_name}
+                      {errors.room_name}
                     </p>
                   )}
                 </div>
@@ -267,14 +267,14 @@ export default function UpdateBilling() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Pet Name
+                    Tenant Name
                   </label>
                   <input
                     type="text"
                     name="pet_name"
                     value={formData.pet_name}
                     onChange={handleChange}
-                    placeholder="Enter pet name"
+                    placeholder="Enter tenant name"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                   />
                 </div>
@@ -314,7 +314,7 @@ export default function UpdateBilling() {
 
             <div>
               <SectionHeader
-                title="Billing Items"
+                title="Payments Items"
                 icon={<FileText size={18} />}
               />
               {errors.items && (
@@ -353,7 +353,7 @@ export default function UpdateBilling() {
                             onChange={(value) =>
                               handleItemChange(index, "service_or_item", value)
                             }
-                            drugs={drugs}
+                            inventoryItems={inventoryItems}
                             placeholder="Service or item"
                           />
                         </td>
@@ -425,7 +425,7 @@ export default function UpdateBilling() {
             <div className="pt-4 border-t border-gray-200 flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() => navigate("/billing")}
+                onClick={() => navigate("/payments")}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
                 disabled={loading || saving}
               >
@@ -436,7 +436,7 @@ export default function UpdateBilling() {
                 className="px-5 py-2.5 text-white bg-purple-600 hover:bg-purple-700 rounded-lg"
                 disabled={loading || saving}
               >
-                Update Billing
+                Update Payments
               </button>
             </div>
           </form>

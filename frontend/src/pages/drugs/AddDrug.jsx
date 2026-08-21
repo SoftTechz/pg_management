@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../app/layout/DashboardLayout";
 import { ArrowLeft, ClipboardList, Package, Plus } from "lucide-react";
 import toast from "react-hot-toast";
-import { createDrug } from "@/services/drug_service";
+import { createInventoryItem } from "@/services/inventoryItem_service";
 import ModuleHeader from "@/components/ui/ModuleHeader";
 import SectionHeader from "@/components/ui/SectionHeader";
 
 const GST_OPTIONS = [0, 5, 12, 18, 28];
 
-export default function AddDrug() {
+export default function AddInventoryItem() {
   const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
   const [formData, setFormData] = useState({
@@ -50,7 +50,7 @@ export default function AddDrug() {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) {
-      newErrors.name = "Drug name is required.";
+      newErrors.name = "InventoryItem name is required.";
     }
 
     if (!formData.date) {
@@ -81,7 +81,7 @@ export default function AddDrug() {
 
     try {
       setLoading(true);
-      await createDrug({
+      await createInventoryItem({
         name: formData.name.trim(),
         date: formData.date,
         quantity: Number(formData.quantity),
@@ -89,14 +89,14 @@ export default function AddDrug() {
         gstPercent: Number(formData.gstPercent || 0),
       });
 
-      toast.success("Drug added successfully");
-      navigate("/drugs");
+      toast.success("InventoryItem added successfully");
+      navigate("/inventoryItems");
     } catch (error) {
       const detail = error?.response?.data?.detail;
-      if (detail === "Drug name already exists") {
-        toast.error("Drug already exists. Open it from list and update stock.");
+      if (detail === "InventoryItem name already exists") {
+        toast.error("InventoryItem already exists. Open it from list and update stock.");
       } else {
-        toast.error("Failed to add drug. Please try again.");
+        toast.error("Failed to add inventoryItem. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -109,12 +109,12 @@ export default function AddDrug() {
         <div className="bg-white rounded-2xl shadow-lg p-8">
           <ModuleHeader
             icon={<Package size={22} />}
-            title="Add New Drug"
+            title="Add New InventoryItem"
             tagline="Create a new inventory record"
             action={
               <button
                 type="button"
-                onClick={() => navigate("/drugs")}
+                onClick={() => navigate("/inventoryItems")}
                 className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
               >
                 <ArrowLeft size={16} />
@@ -128,7 +128,7 @@ export default function AddDrug() {
 
             <div>
               <SectionHeader
-                title="Drug Information"
+                title="InventoryItem Information"
                 icon={<ClipboardList size={18} />}
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -137,7 +137,7 @@ export default function AddDrug() {
                     htmlFor="name"
                     className="block text-sm font-semibold text-gray-700 mb-2"
                   >
-                    Drug Name <span className="text-red-500">*</span>
+                    InventoryItem Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -145,7 +145,7 @@ export default function AddDrug() {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Enter drug name"
+                    placeholder="Enter inventoryItem name"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                   />
                   {errors.name && (
@@ -274,7 +274,7 @@ export default function AddDrug() {
               >
                 <span className="inline-flex items-center gap-2">
                   <Plus size={18} />
-                  Add Drug
+                  Add InventoryItem
                 </span>
               </button>
             </div>

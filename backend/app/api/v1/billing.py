@@ -4,17 +4,17 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.firebase import get_firestore
-from app.schemas.billing import BillingCreate, BillingUpdate
+from app.schemas.payments import PaymentsCreate, PaymentsUpdate
 from app.services.dashboard_stats_service import (
-    decrement_billing,
+    decrement_payments,
     get_dashboard_stats,
-    increment_billing,
+    increment_payments,
 )
 
 router = APIRouter()
 
 
-def _normalize_billing_fields(data: dict[str, Any]) -> dict[str, Any]:
+def _normalize_payments_fields(data: dict[str, Any]) -> dict[str, Any]:
     normalized: dict[str, Any] = {}
     for key, value in data.items():
         if isinstance(value, str):
@@ -32,11 +32,11 @@ def normalize_name(name: str | None) -> str | None:
     return stripped.lower()
 
 
-def _reduce_drug_inventory(db, items: list[dict[str, Any]]) -> None:
+def _reduce_inventoryItem_inventory(db, items: list[dict[str, Any]]) -> None:
     if not items:
         return
 
-    drugs_ref = db.collection("drugs")
+    inventoryItems_ref = db.collection("inventoryItems")
     now = datetime.now(timezone.utc)
 
     for item in items:
@@ -49,38 +49,38 @@ def _reduce_drug_inventory(db, items: list[dict[str, Any]]) -> None:
             continue
 
         normalized_service = normalize_name(service_name)
-        query = drugs_ref.where("name_lower", "==", normalized_service).limit(1)
+        query = inventoryItems_ref.where("name_lower", "==", normalized_service).limit(1)
         matched = list(query.stream())
 
         if not matched:
             continue
 
-        drug_doc = matched[0]
-        drug_ref = drugs_ref.document(drug_doc.id)
-        drug_data = drug_doc.to_dict() or {}
+        inventoryItem_doc = matched[0]
+        inventoryItem_ref = inventoryItems_ref.document(inventoryItem_doc.id)
+        inventoryItem_data = inventoryItem_doc.to_dict() or {}
 
-        current_quantity = float(drug_data.get("presentQuantity", 0) or 0)
+        current_quantity = float(inventoryItem_data.get("presentQuantity", 0) or 0)
         next_quantity = max(0, current_quantity - quantity_to_reduce)
 
-        drug_ref.update({"presentQuantity": next_quantity, "updated_at": now})
+        inventoryItem_ref.update({"presentQuantity": next_quantity, "updated_at": now})
 
 
 @router.post("/")
-def create_billing(payload: BillingCreate):
+def create_payments(payload: PaymentsCreate):
     try:
         db = get_firestore()
         now = datetime.now(timezone.utc)
 
-        billing_data = _normalize_billing_fields(payload.model_dump())
-        billing_data["patient_name"] = billing_data.get("patient_name", "").strip()
-        billing_data["patient_name_lower"] = normalize_name(
-            billing_data.get("patient_name")
+        payments_data = _normalize_payments_fields(payload.model_dump())
+        payments_data["room_name"] = payments_data.get("room_name", "").strip()
+        payments_data["room_name_lower"] = normalize_name(
+            payments_data.get("room_name")
         )
 
         # Recalculate amounts to enforce consistency
         items = []
         total = 0.0
-        for item in billing_data.get("items", []):
+        for item in payments_data.get("items", []):
             q = float(item.get("quantity", 0) or 0)
             r = float(item.get("rate", 0) or 0)
             a = q * r
@@ -94,48 +94,48 @@ def create_billing(payload: BillingCreate):
             )
             total += a
 
-        billing_data["items"] = items
-        billing_data["total_amount"] = float(total)
+        payments_data["items"] = items
+        payments_data["total_amount"] = float(total)
 
-        # Reduce drug inventory for billed items
-        _reduce_drug_inventory(db, items)
+        # Reduce inventoryItem inventory for billed items
+        _reduce_inventoryItem_inventory(db, items)
 
-        doc_ref = db.collection("billing").document()
+        doc_ref = db.collection("payments").document()
 
         doc_ref.set(
             {
                 "id": doc_ref.id,
-                **billing_data,
+                **payments_data,
                 "created_at": now,
                 "updated_at": None,
             }
         )
-        increment_billing()
+        increment_payments()
 
-        return {"success": True, "billing_id": doc_ref.id, "id": doc_ref.id}
+        return {"success": True, "payments_id": doc_ref.id, "id": doc_ref.id}
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/{billing_id}")
-def update_billing(billing_id: str, payload: BillingUpdate):
+@router.put("/{payments_id}")
+def update_payments(payments_id: str, payload: PaymentsUpdate):
     db = get_firestore()
-    doc_ref = db.collection("billing").document(billing_id)
+    doc_ref = db.collection("payments").document(payments_id)
     doc = doc_ref.get()
 
     if not doc.exists:
-        raise HTTPException(status_code=404, detail="Billing record not found")
+        raise HTTPException(status_code=404, detail="Payments record not found")
 
     update_data = payload.model_dump(exclude_unset=True)
-    update_data = _normalize_billing_fields(update_data)
+    update_data = _normalize_payments_fields(update_data)
 
-    if "patient_name" in update_data and update_data["patient_name"] is None:
-        raise HTTPException(status_code=422, detail="Patient name cannot be empty")
+    if "room_name" in update_data and update_data["room_name"] is None:
+        raise HTTPException(status_code=422, detail="Room name cannot be empty")
 
-    if "patient_name" in update_data and update_data["patient_name"]:
-        update_data["patient_name_lower"] = normalize_name(update_data["patient_name"])
+    if "room_name" in update_data and update_data["room_name"]:
+        update_data["room_name_lower"] = normalize_name(update_data["room_name"])
 
     if "items" in update_data and update_data.get("items") is not None:
         items = []
@@ -160,7 +160,7 @@ def update_billing(billing_id: str, payload: BillingUpdate):
         update_data.pop("total_amount", None)
 
     if "items" in update_data and update_data.get("items") is not None:
-        _reduce_drug_inventory(db, update_data["items"])
+        _reduce_inventoryItem_inventory(db, update_data["items"])
 
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields provided for update")
@@ -172,19 +172,19 @@ def update_billing(billing_id: str, payload: BillingUpdate):
 
 
 @router.get("/")
-def get_all_billing(
+def get_all_payments(
     limit: int = Query(10, ge=1, le=100),
     cursor: str | None = Query(None),
     search: str | None = Query(None, min_length=1),
 ):
     db = get_firestore()
-    billing_ref = db.collection("billing")
+    payments_ref = db.collection("payments")
 
     def normalize_doc(doc):
         d = doc.to_dict() or {}
         return {
             "id": doc.id,
-            "patient_name": d.get("patient_name"),
+            "room_name": d.get("room_name"),
             "phone_number": d.get("phone_number"),
             "pet_name": d.get("pet_name"),
             "address": d.get("address"),
@@ -198,15 +198,15 @@ def get_all_billing(
             term = ""
 
         query = (
-            billing_ref.order_by("patient_name_lower")
+            payments_ref.order_by("room_name_lower")
             .start_at([term])
             .end_at([f"{term}\uf8ff"])
         )
     else:
-        query = billing_ref.order_by("created_at", direction="DESCENDING")
+        query = payments_ref.order_by("created_at", direction="DESCENDING")
 
     if cursor:
-        cursor_doc = billing_ref.document(cursor).get()
+        cursor_doc = payments_ref.document(cursor).get()
         if cursor_doc.exists:
             query = query.start_after(cursor_doc)
 
@@ -216,15 +216,15 @@ def get_all_billing(
     has_next = len(docs) > limit
     selected_docs = docs[:limit] if has_next else docs
 
-    billings = [normalize_doc(doc) for doc in selected_docs]
+    paymentss = [normalize_doc(doc) for doc in selected_docs]
 
     next_cursor = selected_docs[-1].id if has_next and selected_docs else None
 
     # stats = get_dashboard_stats()
-    # total = int(stats.get("total_billing", 0) or 0)
+    # total = int(stats.get("total_payments", 0) or 0)
 
     return {
-        "billings": billings,
+        "paymentss": paymentss,
         "limit": limit,
         "next_cursor": next_cursor,
         "has_next": has_next,
@@ -232,23 +232,23 @@ def get_all_billing(
     }
 
 
-@router.delete("/{billing_id}")
-def delete_billing(billing_id: str):
+@router.delete("/{payments_id}")
+def delete_payments(payments_id: str):
     db = get_firestore()
-    doc_ref = db.collection("billing").document(billing_id)
+    doc_ref = db.collection("payments").document(payments_id)
     doc = doc_ref.get()
 
     if not doc.exists:
-        raise HTTPException(status_code=404, detail="Billing record not found")
+        raise HTTPException(status_code=404, detail="Payments record not found")
 
     doc_ref.delete()
-    decrement_billing()
+    decrement_payments()
 
     return {"success": True}
 
 
 # @router.get("/")
-# def get_all_billing(
+# def get_all_payments(
 #     limit: int = Query(10, ge=1, le=100),
 #     cursor: str | None = Query(None),
 #     search: str | None = Query(None, min_length=1),
@@ -257,14 +257,14 @@ def delete_billing(billing_id: str):
 #
 #     t0 = time.time()
 #     db = get_firestore()
-#     billing_ref = db.collection("billing")
-#     print(f"[TIME] Billing DB init: {time.time() - t0:.4f}s")
+#     payments_ref = db.collection("payments")
+#     print(f"[TIME] Payments DB init: {time.time() - t0:.4f}s")
 #
 #     def normalize_doc(doc):
 #         d = doc.to_dict() or {}
 #         return {
 #             "id": doc.id,
-#             "patient_name": d.get("patient_name"),
+#             "room_name": d.get("room_name"),
 #             "phone_number": d.get("phone_number"),
 #             "pet_name": d.get("pet_name"),
 #             "address": d.get("address"),
@@ -276,35 +276,35 @@ def delete_billing(billing_id: str):
 #     if search:
 #         term = normalize_name(search) or ""
 #         query = (
-#             billing_ref.order_by("patient_name_lower")
+#             payments_ref.order_by("room_name_lower")
 #             .start_at([term])
 #             .end_at([f"{term}\uf8ff"])
 #         )
 #         count_query = query
 #     else:
-#         query = billing_ref.order_by("created_at", direction="DESCENDING")
-#         count_query = billing_ref
-#     print(f"[TIME] Billing query build: {time.time() - t1:.4f}s")
+#         query = payments_ref.order_by("created_at", direction="DESCENDING")
+#         count_query = payments_ref
+#     print(f"[TIME] Payments query build: {time.time() - t1:.4f}s")
 #
 #     t2 = time.time()
 #     if cursor:
-#         cursor_doc = billing_ref.document(cursor).get()
+#         cursor_doc = payments_ref.document(cursor).get()
 #         if cursor_doc.exists:
 #             query = query.start_after(cursor_doc)
-#     print(f"[TIME] Billing cursor handling: {time.time() - t2:.4f}s")
+#     print(f"[TIME] Payments cursor handling: {time.time() - t2:.4f}s")
 #
 #     query = query.limit(limit + 1)
 #
 #     t3 = time.time()
 #     docs = list(query.stream())
-#     print(f"[TIME] Billing DB fetch (stream): {time.time() - t3:.4f}s")
+#     print(f"[TIME] Payments DB fetch (stream): {time.time() - t3:.4f}s")
 #
 #     has_next = len(docs) > limit
 #     selected_docs = docs[:limit] if has_next else docs
 #
 #     t4 = time.time()
-#     billings = [normalize_doc(doc) for doc in selected_docs]
-#     print(f"[TIME] Billing normalize: {time.time() - t4:.4f}s")
+#     paymentss = [normalize_doc(doc) for doc in selected_docs]
+#     print(f"[TIME] Payments normalize: {time.time() - t4:.4f}s")
 #
 #     next_cursor = selected_docs[-1].id if has_next and selected_docs else None
 #
@@ -317,12 +317,12 @@ def delete_billing(billing_id: str):
 #             total = int(count_snapshot[0].value)
 #     except Exception:
 #         total = sum(1 for _ in count_query.stream())
-#     print(f"[TIME] Billing count query: {time.time() - t5:.4f}s")
+#     print(f"[TIME] Payments count query: {time.time() - t5:.4f}s")
 #
-#     print(f"[TIME] Billing TOTAL API: {time.time() - start_total:.4f}s")
+#     print(f"[TIME] Payments TOTAL API: {time.time() - start_total:.4f}s")
 #
 #     return {
-#         "billings": billings,
+#         "paymentss": paymentss,
 #         "limit": limit,
 #         "next_cursor": next_cursor,
 #         "has_next": has_next,
@@ -330,16 +330,16 @@ def delete_billing(billing_id: str):
 #     }
 
 
-@router.get("/{billing_id}")
-def get_billing_by_id(billing_id: str):
+@router.get("/{payments_id}")
+def get_payments_by_id(payments_id: str):
     db = get_firestore()
-    doc_ref = db.collection("billing").document(billing_id)
+    doc_ref = db.collection("payments").document(payments_id)
     doc = doc_ref.get()
 
     if not doc.exists:
-        raise HTTPException(status_code=404, detail="Billing record not found")
+        raise HTTPException(status_code=404, detail="Payments record not found")
 
-    billing_data = doc.to_dict() or {}
-    billing_data["id"] = doc.id
+    payments_data = doc.to_dict() or {}
+    payments_data["id"] = doc.id
 
-    return {"billing": billing_data}
+    return {"payments": payments_data}

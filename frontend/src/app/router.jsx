@@ -5,20 +5,17 @@ import Dashboard from "../pages/dashboard/Dashboard";
 // import ListInvoices from "../pages/invoices/ListInvoices";
 // import AddInvoice from "../pages/invoices/AddInvoice";
 // import UpdateInvoice from "../pages/invoices/UpdateInvoice";
+import ListRooms from "../pages/rooms/ListRooms";
+import AddRoom from "../pages/rooms/AddRoom";
+import UpdateRoom from "../pages/rooms/UpdateRoom";
 import ListCustomers from "../pages/customers/ListCustomers";
 import AddCustomer from "../pages/customers/AddCustomer";
 import UpdateCustomer from "../pages/customers/UpdateCustomer";
-import ListBilling from "../pages/billing/ListBilling";
-import AddBilling from "../pages/billing/AddBilling";
-import UpdateBilling from "../pages/billing/UpdateBilling";
-import ListDrug from "../pages/drugs/ListDrug";
-import AddDrug from "../pages/drugs/AddDrug";
-import UpdateDrug from "../pages/drugs/UpdateDrug";
-import ListAppointments from "../pages/appointments/ListAppointments";
-import AddAppointment from "../pages/appointments/AddAppointment";
-import UpdateAppointment from "../pages/appointments/UpdateAppointment";
+import ListAllocations from "../pages/allocations/ListAllocations";
+import AddAllocation from "../pages/allocations/AddAllocation";
+import UpdateAllocation from "../pages/allocations/UpdateAllocation";
 import UserManagement from "../pages/user/UserManagement";
-import ListAppointmentsReport from "../pages/reports/listAppointmentsReport";
+import Reports from "../pages/reports/Reports";
 // import ListItems from "../pages/items/ListItems";
 // import AddItem from "../pages/items/AddItem";
 // import UpdateItem from "../pages/items/UpdateItem";
@@ -39,26 +36,23 @@ export default function AppRouter() {
         <Route path="/" element={<Login />} />
         <Route path="/logout" element={<LogoutRedirect />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/rooms" element={<ListRooms />} />
+        <Route path="/rooms/add" element={<AddRoom />} />
+        <Route path="/rooms/:roomId" element={<UpdateRoom />} />
         <Route path="/customers" element={<ListCustomers />} />
         <Route path="/customers/add" element={<AddCustomer />} />
-        <Route path="/customers/:customerId" element={<UpdateCustomer />} />
-        <Route path="/billing" element={<ListBilling />} />
-        <Route path="/billing/add" element={<AddBilling />} />
-        <Route path="/billing/:billingId" element={<UpdateBilling />} />
-        <Route path="/drugs" element={<ListDrug />} />
-        <Route path="/drugs/add" element={<AddDrug />} />
-        <Route path="/drugs/:drugId" element={<UpdateDrug />} />
-        <Route path="/appointments" element={<ListAppointments />} />
-        <Route path="/appointments/add" element={<AddAppointment />} />
         <Route
-          path="/appointments/:appointmentId"
-          element={<UpdateAppointment />}
+          path="/customers/:customerId/edit"
+          element={<UpdateCustomer />}
+        />
+        <Route path="/allocations" element={<ListAllocations />} />
+        <Route path="/allocations/add" element={<AddAllocation />} />
+        <Route
+          path="/allocations/:allocationId"
+          element={<UpdateAllocation />}
         />
         <Route path="/user-management" element={<UserManagement />} />
-        <Route
-          path="/reports/appointments"
-          element={<ListAppointmentsReport />}
-        />
+        <Route path="/reports" element={<Reports />} />
       </Routes>
     </HashRouter>
   );

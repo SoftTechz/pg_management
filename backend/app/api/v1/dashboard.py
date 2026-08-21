@@ -54,9 +54,9 @@ def rebuild_stats():
 
 @router.get("/low-stock")
 def get_dashboard_low_stock(threshold: int = 50, limit: int = 10):
-    """Get low stock drug details."""
+    """Get low stock inventoryItem details."""
     try:
-        low_stock = dashboard_service.get_low_stock_drugs(threshold, limit)
+        low_stock = dashboard_service.get_low_stock_inventoryItems(threshold, limit)
         return {"success": True, "data": low_stock}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
