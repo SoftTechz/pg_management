@@ -16,6 +16,7 @@ import AddAllocation from "../pages/allocations/AddAllocation";
 import UpdateAllocation from "../pages/allocations/UpdateAllocation";
 import UserManagement from "../pages/user/UserManagement";
 import Reports from "../pages/reports/Reports";
+import PGManagement from "../pages/pgs/PGManagement";
 // import ListItems from "../pages/items/ListItems";
 // import AddItem from "../pages/items/AddItem";
 // import UpdateItem from "../pages/items/UpdateItem";
@@ -53,6 +54,7 @@ export default function AppRouter() {
         />
         <Route path="/user-management" element={<UserManagement />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/pg-management" element={<PGManagement />} />
       </Routes>
     </HashRouter>
   );

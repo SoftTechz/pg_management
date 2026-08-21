@@ -322,7 +322,7 @@ export default function ListCustomers() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-purple-700">
-                        S.No {startIndex + index + 1}
+                        # {startIndex + index + 1}
                       </p>
                       <h3 className="font-semibold text-gray-900 text-sm sm:text-base line-clamp-2 leading-5">
                         {customer.name || "-"}

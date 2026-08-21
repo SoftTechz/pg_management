@@ -6,4 +6,12 @@ const api = axios.create({
   timeout: 10000,
 });
 
+api.interceptors.request.use((config) => {
+  const selectedPgId = localStorage.getItem("selectedPgId");
+  if (selectedPgId) {
+    config.headers["X-PG-ID"] = selectedPgId;
+  }
+  return config;
+});
+
 export default api;

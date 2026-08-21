@@ -8,6 +8,7 @@ import {
   FileText,
   ChevronDown,
   ChevronRight,
+  Building2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -40,6 +41,11 @@ export default function Sidebar({ isOpen, onClose }) {
       name: "User Management",
       icon: <Shield size={18} />,
       path: "/user-management",
+    },
+    {
+      name: "PG Management",
+      icon: <Building2 size={18} />,
+      path: "/pg-management",
     },
   ];
 

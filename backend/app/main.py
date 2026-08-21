@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 
 from app.api.routes import (
     allocations,
@@ -12,7 +14,15 @@ from app.api.routes import (
     rooms,
     settings,
 )
+from app.api.routes import pgs
 from app.core.config import settings as app_settings
+from app.core.pg_context import DEFAULT_PG_ID, set_current_pg_id
+
+
+class PGContextMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        set_current_pg_id(request.headers.get("X-PG-ID") or DEFAULT_PG_ID)
+        return await call_next(request)
 
 
 def create_app() -> FastAPI:
@@ -24,6 +34,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(PGContextMiddleware)
 
     app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
     app.include_router(customers.router, prefix="/api/customers", tags=["customers"])
@@ -38,6 +49,7 @@ def create_app() -> FastAPI:
     app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
     app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
     app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
+    app.include_router(pgs.router, prefix="/api/pgs", tags=["pgs"])
 
     @app.get("/api/health")
     def health() -> dict[str, str]:
